@@ -1,6 +1,5 @@
-import { useNavigate } from "react-router-dom";
-import { useState } from "react";
-import "../../App.css";
+import {useNavigate} from "react-router-dom";
+import {useState} from "react";
 
 export default function SubscribePage() {
   const navigate = useNavigate();
@@ -18,10 +17,8 @@ export default function SubscribePage() {
   return (
     <div className="wrapper">
       <div className="box_section">
-        <h2 style={{ marginBottom: "20px" }}>구독하기</h2>
-        <p style={{ marginBottom: "20px", color: "#666" }}>
-          구독 상품을 선택해주세요!
-        </p>
+        <h2 style={{marginBottom: "20px"}}>구독하기</h2>
+        <p style={{marginBottom: "20px", color: "#666"}}>구독 상품을 선택해주세요!</p>
 
         <label
           style={{

@@ -1,45 +1,35 @@
-import { useEffect, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
-import { loadPaymentWidget } from "@tosspayments/payment-widget-sdk";
-import "../../App.css";
-import { useQuery } from "@tanstack/react-query";
+import {useEffect, useRef, useState} from "react";
+import {useLocation} from "react-router-dom";
+import {loadPaymentWidget} from "@tosspayments/payment-widget-sdk";
+import {useQuery} from "@tanstack/react-query";
 
 const selector = "#payment-widget";
 
-// TODO: clientKey는 개발자센터의 결제위젯 연동 키 > 클라이언트 키로 바꾸세요.
-// TODO: customerKey는 구매자와 1:1 관계로 무작위한 고유값을 생성하세요.
-// @docs https://docs.tosspayments.com/reference/widget-sdk#sdk-설치-및-초기화
-
-// const clientKey = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm";
 const clientKey = "test_ck_pP2YxJ4K879D1MOyabMWVRGZwXLO";
 const customerKey = "heo_dong_bin_test_123";
 
-export function CheckoutPage() {
+// ✅ export default 추가
+export default function CheckoutPage() {
   const location = useLocation();
 
   const selectedPrice = location.state?.price ?? 990;
   const planType = location.state?.planType ?? "MONTHLY_990";
 
-  const { data: paymentWidget } = usePaymentWidget(clientKey, customerKey);
+  const {data: paymentWidget} = usePaymentWidget(clientKey, customerKey);
 
   const paymentMethodsWidgetRef = useRef<any>(null);
 
   const [price, setPrice] = useState(selectedPrice);
-  const [paymentMethodsWidgetReady, isPaymentMethodsWidgetReady] =
-    useState(false);
+  const [paymentMethodsWidgetReady, isPaymentMethodsWidgetReady] = useState(false);
 
   useEffect(() => {
     if (paymentWidget == null) {
       return;
     }
 
-    const paymentMethodsWidget = paymentWidget.renderPaymentMethods(
-      selector,
-      { value: price },
-      { variantKey: "DEFAULT" },
-    );
+    const paymentMethodsWidget = paymentWidget.renderPaymentMethods(selector, {value: price}, {variantKey: "DEFAULT"});
 
-    paymentWidget.renderAgreement("#agreement", { variantKey: "AGREEMENT" });
+    paymentWidget.renderAgreement("#agreement", {variantKey: "AGREEMENT"});
 
     paymentMethodsWidget.on("ready", () => {
       paymentMethodsWidgetRef.current = paymentMethodsWidget;
@@ -60,26 +50,23 @@ export function CheckoutPage() {
   return (
     <div className="wrapper">
       <div className="box_section">
-        <h2 style={{ marginBottom: "16px" }}>결제하기</h2>
-        <p style={{ marginBottom: "20px" }}>선택한 상품: 월 {price}원 구독</p>
+        <h2 style={{marginBottom: "16px"}}>결제하기</h2>
+        <p style={{marginBottom: "20px"}}>선택한 상품: 월 {price}원 구독</p>
 
         <div id="payment-widget" />
         <div id="agreement" />
 
         <button
           className="button"
-          style={{ marginTop: "30px" }}
+          style={{marginTop: "30px"}}
           disabled={!paymentMethodsWidgetReady}
           onClick={async () => {
             try {
-              const response = await fetch(
-                "http://localhost:8080/api/payments/prepare",
-                {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ planType }),
-                },
-              );
+              const response = await fetch("http://localhost:8080/api/payments/prepare", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({planType}),
+              });
 
               const prepareData = await response.json();
 
