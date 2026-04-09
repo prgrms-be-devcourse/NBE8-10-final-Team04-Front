@@ -59,8 +59,7 @@ export default function MCPMatchingPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-slate-600 leading-relaxed">
-                  (설명 영역) 프로젝트의 배경, 목표, 제약사항 등을 깊이 있게 분석하여 마치 사내 전문가처럼 당신의 맥락을
-                  100% 이해하는 AI를 구성합니다.
+                  프로젝트의 배경, 목표, 제약사항 등을 깊이 있게 분석하여 마치 전문가처럼 당신의 맥락을 100% 이해하는 AI를 구성합니다.
                 </p>
               </CardContent>
             </Card>
@@ -74,8 +73,7 @@ export default function MCPMatchingPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-slate-600 leading-relaxed">
-                  (설명 영역) OpenAI, Anthropic, Google 등 수많은 모델 중 현재 작업에 가장 뛰어난 성능을 낼 수 있는
-                  모델과 스킬을 자동으로 매칭합니다.
+                  OpenAI, Anthropic, Google 등 수많은 모델 중 현재 작업에 가장 뛰어난 성능을 낼 수 있는 모델과 스킬을 자동으로 매칭합니다.
                 </p>
               </CardContent>
             </Card>
@@ -89,8 +87,7 @@ export default function MCPMatchingPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-slate-600 leading-relaxed">
-                  (설명 영역) 어떤 AI를 어떻게 써야 할지 고민할 필요가 없습니다. 클릭 몇 번으로 즉시 실무에 투입 가능한
-                  전문가급 AI 워크플로우를 얻으세요.
+                  어떤 AI를 어떻게 써야 할지 고민할 필요가 없습니다. 클릭 몇 번으로 즉시 사용 가능한 AI 워크플로우를 얻으세요.
                 </p>
               </CardContent>
             </Card>
@@ -115,7 +112,7 @@ export default function MCPMatchingPage() {
               <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-6 rounded-2xl border border-slate-100 bg-slate-50 shadow-sm">
                 <h3 className="font-bold text-lg text-slate-900 mb-2">작업 상황 및 목표 입력</h3>
                 <p className="text-slate-600 text-sm leading-relaxed">
-                  [여기에 설명을 작성하세요] 예: 해결하고자 하는 문제나 필요한 산출물의 형태를 자유롭게 입력합니다.
+                  해결하고자 하는 문제나 필요한 산출물의 형태를 자유롭게 입력합니다.
                 </p>
               </div>
             </div>
@@ -128,7 +125,7 @@ export default function MCPMatchingPage() {
               <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-6 rounded-2xl border border-slate-100 bg-slate-50 shadow-sm">
                 <h3 className="font-bold text-lg text-slate-900 mb-2">MCP 기반 스킬 매칭 및 분석</h3>
                 <p className="text-slate-600 text-sm leading-relaxed">
-                  [여기에 설명을 작성하세요] 예: 입력된 정보를 바탕으로 시스템이 최적의 모델과 플러그인(스킬) 조합을
+                  입력된 정보를 바탕으로 시스템이 최적의 모델과 플러그인(스킬) 조합을
                   분석합니다.
                 </p>
               </div>
@@ -142,7 +139,7 @@ export default function MCPMatchingPage() {
               <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-6 rounded-2xl border border-slate-100 bg-slate-50 shadow-sm">
                 <h3 className="font-bold text-lg text-slate-900 mb-2">실무 적용 및 지속적인 보정</h3>
                 <p className="text-slate-600 text-sm leading-relaxed">
-                  [여기에 설명을 작성하세요] 예: 매칭된 솔루션을 즉시 사용하며, 피드백을 통해 AI의 컨텍스트를 더욱
+                  매칭된 솔루션은 즉시 사용 가능하며, 피드백을 통해 AI의 컨텍스트를 더욱
                   고도화합니다.
                 </p>
               </div>
@@ -165,12 +162,6 @@ export default function MCPMatchingPage() {
                 <li className="flex items-center gap-2 text-slate-300">
                   <CheckCircle2 className="h-5 w-5 text-blue-400" /> 무제한 MCP 스킬 매칭
                 </li>
-                <li className="flex items-center gap-2 text-slate-300">
-                  <CheckCircle2 className="h-5 w-5 text-blue-400" /> 상위 1% 프라이빗 프롬프트 열람
-                </li>
-                <li className="flex items-center gap-2 text-slate-300">
-                  <CheckCircle2 className="h-5 w-5 text-blue-400" /> 광고 없는 쾌적한 AI 챗봇 환경
-                </li>
               </ul>
             </div>
 
@@ -182,7 +173,7 @@ export default function MCPMatchingPage() {
               >
                 무제한 멤버십 구독하기
               </Button>
-              <p className="text-center text-slate-400 text-sm mt-4">언제든 해지 가능합니다.</p>
+              {/* {<p className="text-center text-slate-400 text-sm mt-4">언제든 해지 가능합니다.</p>} */}
             </div>
           </div>
         </PageInner>

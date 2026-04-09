@@ -9,8 +9,7 @@ import {useAuthStore} from "@/features/auth/stores/authStore";
 import {paymentApi} from "@/features/payment/api/paymentApi";
 
 const selector = "#payment-widget";
-// ⚠️ 중요: 반드시 'test_ck_' 로 시작하는 클라이언트 키여야 합니다!
-const clientKey = import.meta.env.VITE_TOSS_CLIENT_KEY || "test_ck_pP2YxJ4K879D1MOyabMWVRGZwXLO";
+const clientKey = import.meta.env.VITE_TOSS_CLIENT_KEY
 
 export default function CheckoutPage() {
   const location = useLocation();

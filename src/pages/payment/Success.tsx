@@ -1,16 +1,19 @@
-import {useState, useEffect} from "react";
+// src/pages/payment/Success.tsx
+import {useState, useEffect, useRef} from "react";
 import {useNavigate, useSearchParams} from "react-router-dom";
 import {CheckCircle} from "lucide-react";
 import {PageLayout, PageInner} from "@/components/layout/PageLayout";
 import {Card} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
-import {paymentApi} from "@/features/payment/api/paymentApi"; // 🌟 API 임포트
+import {paymentApi} from "@/features/payment/api/paymentApi";
 
 export default function SuccessPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // 백엔드 응답을 저장할 상태 (PaymentConfirmResponse 기준)
+  // 🌟 Strict Mode 중복 호출 방지용 Ref
+  const isConfirming = useRef(false);
+
   const [responseData, setResponseData] = useState<{
     orderId: string;
     amount: number;
@@ -25,16 +28,15 @@ export default function SuccessPage() {
       amount: Number(searchParams.get("amount")),
     };
 
-    // 파라미터가 없으면 실행 안 함
     if (!requestData.paymentKey || !requestData.orderId) return;
+    if (isConfirming.current) return;
+    isConfirming.current = true;
 
     async function confirmPayment() {
       try {
-        // 🌟 커스텀 API를 통해 백엔드에 최종 승인 요청 (토큰 자동 포함)
         const data = await paymentApi.confirm(requestData);
         setResponseData(data);
       } catch (error: any) {
-        // 백엔드에서 400 Bad Request 등을 던졌을 때의 에러 핸들링
         const errorMessage = error.response?.data?.message || "결제 승인 중 오류가 발생했습니다.";
         const errorCode = error.response?.data?.code || "CONFIRM_FAILED";
         navigate(`/fail?code=${errorCode}&message=${errorMessage}`);
@@ -68,7 +70,6 @@ export default function SuccessPage() {
                 {responseData ? responseData.orderId : searchParams.get("orderId")}
               </span>
             </div>
-            {/* 백엔드에서 보내준 메시지가 있다면 표시 */}
             {responseData && (
               <div className="flex justify-between items-center text-sm mt-2">
                 <span className="text-slate-500">상태</span>
