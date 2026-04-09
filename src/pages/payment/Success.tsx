@@ -1,118 +1,95 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { Link } from "react-router-dom";
+import {useState, useEffect} from "react";
+import {useNavigate, useSearchParams} from "react-router-dom";
+import {CheckCircle} from "lucide-react";
+import {PageLayout, PageInner} from "@/components/layout/PageLayout";
+import {Card} from "@/components/ui/card";
+import {Button} from "@/components/ui/button";
+import {paymentApi} from "@/features/payment/api/paymentApi"; // 🌟 API 임포트
 
-export function SuccessPage() {
+export default function SuccessPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [responseData, setResponseData] = useState(null);
+
+  // 백엔드 응답을 저장할 상태 (PaymentConfirmResponse 기준)
+  const [responseData, setResponseData] = useState<{
+    orderId: string;
+    amount: number;
+    status: string;
+    message: string;
+  } | null>(null);
 
   useEffect(() => {
     const requestData = {
-      paymentKey: searchParams.get("paymentKey"),
-      orderId: searchParams.get("orderId"),
+      paymentKey: searchParams.get("paymentKey") || "",
+      orderId: searchParams.get("orderId") || "",
       amount: Number(searchParams.get("amount")),
     };
 
-    // TODO: 개발자센터에 로그인해서 내 결제위젯 연동 키 > 시크릿 키를 입력하세요. 시크릿 키는 외부에 공개되면 안돼요.
-    // @docs https://docs.tosspayments.com/reference/using-api/api-keys
-    // const secretKey = "test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6";
+    // 파라미터가 없으면 실행 안 함
+    if (!requestData.paymentKey || !requestData.orderId) return;
 
-    // 토스페이먼츠 API는 시크릿 키를 사용자 ID로 사용하고, 비밀번호는 사용하지 않습니다.
-    // 비밀번호가 없다는 것을 알리기 위해 시크릿 키 뒤에 콜론을 추가합니다.
-    // @docs https://docs.tosspayments.com/reference/using-api/authorization#%EC%9D%B8%EC%A6%9D
-    // const encryptedSecretKey = `Basic ${btoa(secretKey + ":")}`;
-
-    async function confirm() {
-      const response = await fetch(
-        "http://localhost:8080/api/payments/confirm",
-        {
-          method: "POST",
-          headers: {
-            // Authorization: encryptedSecretKey, -> "Bearer " + token 추가
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(requestData),
-        },
-      );
-
-      const json = await response.json();
-
-      if (!response.ok) {
-        // TODO: 구매 실패 비즈니스 로직 구현
-        console.log(json);
-        navigate(`/fail?code=${json.code}&message=${json.message}`);
-        return;
+    async function confirmPayment() {
+      try {
+        // 🌟 커스텀 API를 통해 백엔드에 최종 승인 요청 (토큰 자동 포함)
+        const data = await paymentApi.confirm(requestData);
+        setResponseData(data);
+      } catch (error: any) {
+        // 백엔드에서 400 Bad Request 등을 던졌을 때의 에러 핸들링
+        const errorMessage = error.response?.data?.message || "결제 승인 중 오류가 발생했습니다.";
+        const errorCode = error.response?.data?.code || "CONFIRM_FAILED";
+        navigate(`/fail?code=${errorCode}&message=${errorMessage}`);
       }
-
-      // TODO: 결제 성공 비즈니스 로직을 구현하세요.
-      // console.log(json);
-      return json;
     }
-    confirm().then((data) => {
-      setResponseData(data);
-    });
-  }, [searchParams]);
+
+    confirmPayment();
+  }, [searchParams, navigate]);
 
   return (
-    <>
-      <div className="box_section" style={{ width: "600px" }}>
-        <img
-          width="100px"
-          src="https://static.toss.im/illusts/check-blue-spot-ending-frame.png"
-        />
-        <h2>결제를 완료했어요</h2>
-        <div className="p-grid typography--p" style={{ marginTop: "50px" }}>
-          <div className="p-grid-col text--left">
-            <b>결제금액</b>
+    <PageLayout className="bg-slate-50 py-20">
+      <PageInner className="max-w-lg">
+        <Card className="p-8 md:p-12 text-center border-slate-200 shadow-sm bg-white">
+          <CheckCircle className="w-20 h-20 text-emerald-500 mx-auto mb-6" />
+          <h2 className="text-3xl font-bold text-slate-900 mb-2">결제가 완료되었습니다</h2>
+          <p className="text-slate-500 mb-10">start-ai-io의 프리미엄 기능을 지금 바로 즐겨보세요!</p>
+
+          <div className="bg-slate-50 p-6 rounded-xl text-left space-y-4 mb-10 border border-slate-100">
+            <div className="flex justify-between items-center pb-4 border-b border-slate-200">
+              <span className="text-slate-500 font-medium">결제 금액</span>
+              <span className="text-lg font-bold text-blue-600">
+                {responseData
+                  ? responseData.amount.toLocaleString()
+                  : Number(searchParams.get("amount")).toLocaleString()}
+                원
+              </span>
+            </div>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-slate-500">주문 번호</span>
+              <span className="text-slate-900 font-medium">
+                {responseData ? responseData.orderId : searchParams.get("orderId")}
+              </span>
+            </div>
+            {/* 백엔드에서 보내준 메시지가 있다면 표시 */}
+            {responseData && (
+              <div className="flex justify-between items-center text-sm mt-2">
+                <span className="text-slate-500">상태</span>
+                <span className="text-green-600 font-medium">{responseData.message}</span>
+              </div>
+            )}
           </div>
-          <div className="p-grid-col text--right" id="amount">
-            {`${Number(searchParams.get("amount")).toLocaleString()}원`}
-          </div>
-        </div>
-        <div className="p-grid typography--p" style={{ marginTop: "10px" }}>
-          <div className="p-grid-col text--left">
-            <b>주문번호</b>
-          </div>
-          <div className="p-grid-col text--right" id="orderId">
-            {`${searchParams.get("orderId")}`}
-          </div>
-        </div>
-        <div className="p-grid typography--p" style={{ marginTop: "10px" }}>
-          <div className="p-grid-col text--left">
-            <b>paymentKey</b>
-          </div>
-          <div
-            className="p-grid-col text--right"
-            id="paymentKey"
-            style={{ whiteSpace: "initial", width: "250px" }}
-          >
-            {`${searchParams.get("paymentKey")}`}
-          </div>
-        </div>
-        <div className="p-grid-col">
-          <Link to="https://docs.tosspayments.com/guides/payment-widget/integration">
-            <button className="button p-grid-col5">연동 문서</button>
-          </Link>
-          <Link to="https://discord.gg/A4fRFXQhRu">
-            <button
-              className="button p-grid-col5"
-              style={{ backgroundColor: "#e8f3ff", color: "#1b64da" }}
+
+          <div className="flex gap-4">
+            <Button variant="outline" className="flex-1 h-12" onClick={() => navigate("/")}>
+              메인으로
+            </Button>
+            <Button
+              className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={() => navigate("/mypage")}
             >
-              실시간 문의
-            </button>
-          </Link>
-        </div>
-      </div>
-      <div
-        className="box_section"
-        style={{ width: "600px", textAlign: "left" }}
-      >
-        <b>Response Data :</b>
-        <div id="response" style={{ whiteSpace: "initial" }}>
-          {responseData && <pre>{JSON.stringify(responseData, null, 4)}</pre>}
-        </div>
-      </div>
-    </>
+              마이페이지
+            </Button>
+          </div>
+        </Card>
+      </PageInner>
+    </PageLayout>
   );
 }
