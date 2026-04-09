@@ -1,26 +1,21 @@
 // src/features/vendors/components/UpdateCommunityTab.tsx
 import {useState} from "react";
-import {MessageCircle, ChevronLeft, CornerDownRight, User, Trash2} from "lucide-react";
+import {MessageCircle, ChevronLeft, CornerDownRight, User, Trash2, ExternalLink} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {useCommunity} from "@/features/community/hooks/useCommunity";
 
-// 벤더 상세 페이지에서 props로 vendorId를 넘겨주어야 합니다.
 export function UpdateCommunityTab({vendorId}: {vendorId: string}) {
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
   const [newComment, setNewComment] = useState("");
   const [replyTo, setReplyTo] = useState<{id: number; author: string} | null>(null);
 
-  // 🌟 커스텀 훅을 통해 API 데이터 가져오기
   const {posts, comments, isLoading, createComment, deleteComment} = useCommunity(selectedPostId || undefined);
 
-  // 현재 벤더와 일치하는 게시글만 필터링 (string -> number 변환 주의)
   const vendorPosts = posts?.contents.filter((p) => p.vendorId === Number(vendorId)) || [];
 
-  // 날짜 포맷팅 헬퍼 함수
   const formatDate = (dateString: string) => dateString.split("T");
 
-  // 댓글 작성 핸들러
   const handleCommentSubmit = () => {
     if (!newComment.trim()) return;
     createComment(
@@ -34,12 +29,10 @@ export function UpdateCommunityTab({vendorId}: {vendorId: string}) {
     );
   };
 
-  // --- 1. 로딩 상태 ---
   if (isLoading && !posts) {
     return <div className="py-20 text-center text-slate-500 animate-pulse">데이터를 불러오는 중입니다...</div>;
   }
 
-  // --- 2. 목록 뷰 ---
   if (!selectedPostId) {
     return (
       <div className="flex flex-col gap-4 animate-in fade-in duration-300">
@@ -52,7 +45,7 @@ export function UpdateCommunityTab({vendorId}: {vendorId: string}) {
           <div
             key={post.id}
             onClick={() => setSelectedPostId(post.id)}
-            className="p-6 rounded-xl border border-slate-200 hover:border-slate-800 cursor-pointer transition-colors"
+            className="p-6 rounded-xl border border-slate-200 hover:border-slate-800 cursor-pointer transition-colors bg-white shadow-sm"
           >
             <div className="flex justify-between items-start mb-2">
               <div className="flex items-center gap-2">
@@ -63,8 +56,9 @@ export function UpdateCommunityTab({vendorId}: {vendorId: string}) {
               </div>
               <span className="text-sm text-slate-500">{formatDate(post.publishedAt)}</span>
             </div>
-            <p className="text-slate-600 mb-4">{post.summary}</p>
-            <div className="flex items-center gap-1.5 text-sm text-slate-500">
+            {/* 목록 뷰에서는 요약을 한 줄로 잘라서 표시 */}
+            <p className="text-slate-600 mb-4 line-clamp-2">{post.summary}</p>
+            <div className="flex items-center gap-1.5 text-sm text-slate-500 font-medium">
               <MessageCircle className="h-4 w-4" /> 게시글 보기
             </div>
           </div>
@@ -79,7 +73,6 @@ export function UpdateCommunityTab({vendorId}: {vendorId: string}) {
     );
   }
 
-  // --- 3. 상세 뷰 및 댓글 ---
   const selectedPost = vendorPosts.find((p) => p.id === selectedPostId);
   const rootComments = comments?.filter((c) => c.parentId === null) || [];
 
@@ -89,13 +82,27 @@ export function UpdateCommunityTab({vendorId}: {vendorId: string}) {
         <ChevronLeft className="h-4 w-4 mr-1" /> 목록으로
       </Button>
 
-      {/* 게시글 본문 */}
+      {/* 🌟 수정된 게시글 본문(상세 뷰) */}
       <div className="mb-10 pb-10 border-b border-slate-200">
         <h2 className="text-2xl font-bold text-slate-900 mb-2">{selectedPost?.title}</h2>
         <p className="text-sm text-slate-500 mb-6">{selectedPost && formatDate(selectedPost.publishedAt)}</p>
-        <div className="text-slate-700 leading-relaxed whitespace-pre-wrap bg-slate-50 p-6 rounded-lg">
-          {selectedPost?.body}
+
+        {/* 요약(Summary) 전체 표시 영역 */}
+        <div className="text-slate-700 leading-relaxed whitespace-pre-wrap bg-slate-50 p-6 rounded-lg mb-4 text-[15px]">
+          {selectedPost?.summary}
         </div>
+
+        {/* 원본 소스 링크 (버튼 형태) */}
+        {selectedPost?.sourceUrl && (
+          <a
+            href={selectedPost.sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-md font-medium text-sm transition-colors"
+          >
+            <ExternalLink className="w-4 h-4" /> 원본 업데이트 문서 보러가기
+          </a>
+        )}
       </div>
 
       {/* 댓글 작성란 */}
@@ -139,7 +146,6 @@ export function UpdateCommunityTab({vendorId}: {vendorId: string}) {
                   <span className="font-bold text-slate-900 text-sm">{comment.authorName}</span>
                   <span className="text-xs text-slate-500">{formatDate(comment.createdAt)}</span>
                 </div>
-                {/* 삭제 버튼 (본인 권한 체크는 백엔드에서 에러로 처리하지만, UI상 휴지통 아이콘 제공) */}
                 {!comment.deleted && (
                   <button
                     onClick={() => deleteComment(comment.id)}
@@ -162,7 +168,6 @@ export function UpdateCommunityTab({vendorId}: {vendorId: string}) {
                 </button>
               )}
 
-              {/* 대댓글 렌더링 (depth 1) */}
               {comments
                 ?.filter((reply) => reply.parentId === comment.id)
                 .map((reply) => (

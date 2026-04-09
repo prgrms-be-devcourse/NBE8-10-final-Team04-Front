@@ -6,7 +6,7 @@ export interface CommunityPost {
   type: PostType;
   title: string;
   summary: string;
-  body: string;
+  sourceUrl: string;
   status: PostStatus;
   targetDate: string;
   vendorId: number;

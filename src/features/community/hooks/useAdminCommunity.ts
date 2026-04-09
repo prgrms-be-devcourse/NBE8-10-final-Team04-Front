@@ -20,8 +20,9 @@ export function useAdminCommunity(statusFilter: PostStatus | "ALL" = "ALL", page
     },
   });
 
+  // 🌟 업데이트 뮤테이션 타입 변경 (body -> sourceUrl)
   const updateMutation = useMutation({
-    mutationFn: ({id, payload}: {id: number; payload: {title: string; summary: string; body: string}}) =>
+    mutationFn: ({id, payload}: {id: number; payload: {title: string; summary: string; sourceUrl: string}}) =>
       adminCommunityApi.updatePost(id, payload),
     onSuccess: () => {
       toast.success("게시글이 수정되었습니다.");
@@ -37,11 +38,20 @@ export function useAdminCommunity(statusFilter: PostStatus | "ALL" = "ALL", page
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: adminCommunityApi.deletePost,
+    onSuccess: () => {
+      toast.success("게시글이 삭제(HIDDEN) 처리되었습니다.");
+      queryClient.invalidateQueries({queryKey: ["admin", "community", "posts"]});
+    },
+  });
+
   return {
     posts: postsQuery.data,
     isLoading: postsQuery.isLoading,
     generatePost: generateMutation.mutate,
     updatePost: updateMutation.mutate,
     changeStatus: changeStatusMutation.mutate,
+    deletePost: deleteMutation.mutate,
   };
 }
