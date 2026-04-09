@@ -8,29 +8,28 @@ interface AuthState {
   user: AuthUser | null;
   isAuthenticated: boolean;
   setAuth: (accessToken: string, refreshToken: string, user: AuthUser) => void;
-  setTokens: (accessToken: string, refreshToken: string) => void;
   clearAuth: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
-      accessToken: null,
-      refreshToken: null,
-      user: null,
-      isAuthenticated: false,
+      // 🌟 테스트를 위해 초기값을 null 대신 가짜(Mock) 데이터로 채웁니다.
+      accessToken: "fake-access-token",
+      refreshToken: "fake-refresh-token",
+      user: {
+        memberId: 1,
+        name: "한민희(관리자)", // 사용자 이름
+        email: "admin@test.com",
+        role: "ADMIN", // 👈 이 값이 있어야 관리자 메뉴가 보입니다
+      } as AuthUser,
+      isAuthenticated: true, // 🌟 항상 로그인된 상태로 간주합니다.
+
       setAuth: (accessToken, refreshToken, user) => set({accessToken, refreshToken, user, isAuthenticated: true}),
-      setTokens: (accessToken, refreshToken) => set({accessToken, refreshToken}),
       clearAuth: () => set({accessToken: null, refreshToken: null, user: null, isAuthenticated: false}),
     }),
     {
       name: "auth-storage",
-      // 보안상 로컬스토리지에는 최소한의 정보만 저장 (실무에서는 토큰은 쿠키로 빼는 것을 권장)
-      partialize: (state) => ({
-        user: state.user,
-        accessToken: state.accessToken,
-        refreshToken: state.refreshToken,
-      }),
     },
   ),
 );

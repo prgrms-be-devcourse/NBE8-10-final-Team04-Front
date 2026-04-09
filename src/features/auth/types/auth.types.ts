@@ -1,3 +1,5 @@
+// src/features/auth/types/auth.types.ts
+
 export interface AuthUser {
   memberId: number;
   name: string;
@@ -5,12 +7,16 @@ export interface AuthUser {
   role: string;
 }
 
-export interface GoogleLoginResponse extends AuthUser {
+export interface LoginResponse {
+  memberId: number;
+  name: string;
+  email: string;
+  role: string;
   accessToken: string;
   refreshToken: string;
 }
 
-export interface TokenRefreshResponse {
+export interface RefreshResponse {
   accessToken: string;
   refreshToken: string;
 }

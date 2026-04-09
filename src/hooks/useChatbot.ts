@@ -1,56 +1,104 @@
+// src/hooks/useChatbot.ts
 import {useState, useRef, useEffect, type FormEvent} from "react";
 import {type ChatMessage} from "@/types/chat.types";
+import {apiClient} from "@/lib/axios";
 
 export function useChatbot() {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "init-1",
-      role: "assistant",
-      content:
-        "안녕하세요! start-ai-io AI 챗봇입니다. AI 툴 추천, 프롬프트 작성법, 혹은 개발 관련 질문 등 무엇이든 물어보세요.",
-      createdAt: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  // 자동 스크롤을 위한 참조 객체
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // 메시지가 추가될 때마다 맨 아래로 자동 스크롤
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({behavior: "smooth"});
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
   }, [messages, isTyping]);
 
-  const handleSendMessage = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isTyping) return;
+  // 페이지 진입 시 Welcome 메시지 호출
+  useEffect(() => {
+    async function fetchWelcome() {
+      try {
+        const {data} = await apiClient.get("/api/chatbot/welcome");
+        if (data && data.message) {
+          setMessages([
+            {
+              id: "welcome-api",
+              role: "assistant",
+              content: data.message,
+              cards: data.cards,
+              topPick: data.topPick,
+              nextActions: data.nextActions,
+              outOfScope: data.outOfScope,
+              createdAt: new Date(),
+            },
+          ]);
+        }
+      } catch (error) {
+        console.error("Welcome API 호출 실패", error);
+        // 실패 시 기본 메시지
+        setMessages([
+          {
+            id: "init-1",
+            role: "assistant",
+            content: "안녕하세요! 어떤 도움이 필요하신가요?",
+            createdAt: new Date(),
+          },
+        ]);
+      }
+    }
+    fetchWelcome();
+  }, []);
 
-    const userText = input.trim();
-    setInput(""); // 입력창 초기화
+  const handleSendMessage = async (e?: FormEvent, textOverride?: string) => {
+    if (e) e.preventDefault();
 
-    // 1. 유저 메시지 화면에 추가
+    // 사용자가 입력한 텍스트 또는 '다음 질문(nextActions)' 버튼을 클릭한 텍스트
+    const userText = textOverride || input.trim();
+    if (!userText || isTyping) return;
+
+    setInput("");
+
     const newUserMsg: ChatMessage = {
       id: Date.now().toString(),
       role: "user",
       content: userText,
       createdAt: new Date(),
     };
+
     setMessages((prev) => [...prev, newUserMsg]);
     setIsTyping(true);
 
-    // TODO: 실제 AI API(OpenAI, Claude 등) 연동 자리
-    // 현재는 테스트를 위해 1.5초 뒤에 가짜 응답이 오도록 구현했습니다.
-    setTimeout(() => {
+    try {
+      // 🌟 백엔드 API 호출
+      const {data} = await apiClient.post("/api/chatbot", {question: userText});
+
       const aiResponseMsg: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: `'${userText}'에 대한 답변입니다. 실제 API를 연동하면 이곳에 AI의 답변이 스트리밍되어 표시됩니다. 추가로 궁금한 점이 있으신가요?`,
+        content: data.message || "",
+        cards: data.cards,
+        topPick: data.topPick,
+        nextActions: data.nextActions,
+        outOfScope: data.outOfScope,
         createdAt: new Date(),
       };
+
       setMessages((prev) => [...prev, aiResponseMsg]);
+    } catch (error) {
+      console.error("Chatbot API Error:", error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: "죄송합니다. 서버와 통신 중 오류가 발생했습니다.",
+          createdAt: new Date(),
+        },
+      ]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   return {
@@ -58,7 +106,7 @@ export function useChatbot() {
     input,
     setInput,
     isTyping,
-    messagesEndRef,
+    scrollRef,
     handleSendMessage,
   };
 }
