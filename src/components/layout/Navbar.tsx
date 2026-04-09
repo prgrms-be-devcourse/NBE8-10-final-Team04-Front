@@ -17,7 +17,6 @@ export default function Navbar() {
     navigate("/");
   };
 
-  // ✅ 변경된 메뉴: 검색 -> AI 업데이트
 const NavLinks = () => (
   <>
     <Link
@@ -63,8 +62,7 @@ const NavLinks = () => (
     >
       마이페이지
     </Link>
-    {/*user?.role === "ADMIN"*/}
-    {true && (
+    {user?.role === "ADMIN" && (
       <Link
         to="/admin"
         onClick={() => setIsOpen(false)}

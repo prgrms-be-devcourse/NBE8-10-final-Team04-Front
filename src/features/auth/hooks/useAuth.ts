@@ -13,7 +13,7 @@ export function useAuth() {
 
   const from = location.state?.from?.pathname || "/";
 
-  // 1. 로그인 (구글 idToken 받아서 백엔드로 전송)
+  // 1. 로그인
   const loginMutation = useMutation({
     mutationFn: (idToken: string) => authApi.googleLogin(idToken),
     onSuccess: (data) => {
@@ -31,7 +31,7 @@ export function useAuth() {
     },
   });
 
-  // 2. 로그아웃 (백엔드 세션 종료 및 프론트 상태 초기화)
+  // 2. 로그아웃
   const logoutMutation = useMutation({
     mutationFn: async () => {
       if (refreshToken) {
@@ -39,11 +39,11 @@ export function useAuth() {
       }
     },
     onSettled: () => {
-      // 성공이든 실패든 클라이언트의 상태와 캐시는 무조건 날림
+      // 성공이든 실패든 프론트엔드 상태와 캐시는 무조건 초기화
       clearAuth();
       queryClient.clear();
       toast.info("로그아웃 되었습니다.");
-      navigate("/");
+      navigate("/login"); // 로그아웃 후 로그인 페이지로 이동
     },
   });
 

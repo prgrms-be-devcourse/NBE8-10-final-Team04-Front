@@ -8,12 +8,12 @@ export const apiClient = axios.create({
   headers: {"Content-Type": "application/json"},
 });
 
-// 인터셉터용 커스텀 타입 (재시도 여부 플래그)
+// 재시도 여부 플래그를 위한 커스텀 타입
 interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
 
-// Request: 매 요청마다 Zustand에서 Access Token을 꺼내 헤더에 주입
+// Request Interceptor: 헤더에 토큰 주입
 apiClient.interceptors.request.use((config) => {
   const token = useAuthStore.getState().accessToken;
   if (token) {
@@ -22,13 +22,13 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Response: 401(Unauthorized) 에러 발생 시 리프레시 로직 수행
+// Response Interceptor: 401 에러 시 토큰 재발급
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config as CustomAxiosRequestConfig;
 
-    // 401 에러이고, 아직 재시도를 안 한 요청이라면
+    // 401 에러이고, 재시도한 적이 없는 요청일 경우
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       originalRequest._retry = true;
 
@@ -36,28 +36,29 @@ apiClient.interceptors.response.use(
 
       if (refreshToken && user) {
         try {
-          // ⚠️ 무한 루프 방지를 위해 apiClient 대신 기본 axios를 사용하여 리프레시 요청
-          const {data} = await axios.post(`${apiClient.defaults.baseURL}/api/v1/auth/token/refresh`, {
+          // 🌟 무한 루프 방지를 위해 apiClient 대신 axios 사용
+          const response = await axios.post(`${apiClient.defaults.baseURL}/api/v1/auth/token/refresh`, {
             refreshToken,
           });
 
-          const newAccessToken = data.data.accessToken;
-          const newRefreshToken = data.data.refreshToken;
+          // 🌟 백엔드 ApiResponse 구조에 맞춰 data.data에서 토큰 추출
+          const newAccessToken = response.data.data.accessToken;
+          const newRefreshToken = response.data.data.refreshToken;
 
           // Zustand 스토어 업데이트
           setAuth(newAccessToken, newRefreshToken, user);
 
-          // 원래 실패했던 요청의 헤더에 새 토큰을 꽂고 다시 요청 (사용자는 에러를 눈치채지 못함)
+          // 실패했던 기존 요청의 헤더를 새 토큰으로 교체 후 재요청
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
           return apiClient(originalRequest);
         } catch (refreshError) {
-          // 리프레시 토큰마저 만료/유효하지 않다면 강제 로그아웃
+          // 리프레시 토큰 갱신마저 실패하면 강제 로그아웃
           clearAuth();
           window.location.href = "/login";
           return Promise.reject(refreshError);
         }
       } else {
-        // 리프레시 토큰이 없으면 그냥 로그아웃
+        // 리프레시 토큰이 아예 없는 경우
         clearAuth();
         window.location.href = "/login";
       }

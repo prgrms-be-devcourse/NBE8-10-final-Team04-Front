@@ -91,13 +91,13 @@ export default function MyPage() {
                 </Badge>
                 {isSubscribed && (
                   <span className="text-[10px] text-slate-400 font-medium">
-                    다음 결제: {membership.nextBillingDate}
+                    다음 결제: {membership?.nextBillingDate}
                   </span>
                 )}
               </div>
               <div className="mb-6">
                 <p className="text-xs text-slate-400 mb-1">MCP 매칭 잔여 횟수</p>
-                <p className="text-2xl font-black text-white">{membership.remainingMcp}</p>
+                <p className="text-2xl font-black text-white">{membership?.remainingMcp}</p>
               </div>
               <Button
                 className="w-full bg-white text-slate-900 hover:bg-slate-100 font-bold"
