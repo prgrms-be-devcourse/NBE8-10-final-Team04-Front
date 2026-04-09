@@ -1,49 +1,66 @@
+// src/pages/admin/AdminCommunityPage.tsx
 import {useState} from "react";
 import {useAdminCommunity} from "@/features/community/hooks/useAdminCommunity";
 import {PageLayout, PageInner} from "@/components/layout/PageLayout";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
-import {Textarea} from "@/components/ui/textarea";
 import {Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog";
-import {type CommunityPost, type PostStatus} from "@/features/community/types/community.types";
+import {type CommunityPost, type PostStatus, type PostType} from "@/features/community/types/community.types";
 import {format} from "date-fns";
+import {toast} from "sonner";
+import {ExternalLink} from "lucide-react";
+import {Textarea} from "@/components/ui/textarea";
 
 export default function AdminCommunityPage() {
   const [filter, setFilter] = useState<PostStatus | "ALL">("ALL");
-  const {posts, isLoading, generatePost, updatePost, changeStatus} = useAdminCommunity(filter);
+  const {posts, isLoading, generatePost, updatePost, changeStatus, deletePost} = useAdminCommunity(filter);
 
-  // 모달 제어용 상태
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
-  const [editForm, setEditForm] = useState({title: "", summary: "", body: ""});
+  // 🌟 editForm 상태 변경
+  const [editForm, setEditForm] = useState({title: "", summary: "", sourceUrl: ""});
+
+  const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
+  const [generateForm, setGenerateForm] = useState<{type: PostType; targetDate: string; vendorId: string}>({
+    type: "MODEL_INFO",
+    targetDate: format(new Date(), "yyyy-MM-dd"),
+    vendorId: "",
+  });
 
   const openEditModal = (post: CommunityPost) => {
     setSelectedPost(post);
-    setEditForm({title: post.title, summary: post.summary, body: post.body});
+    // 🌟 모달을 열 때 sourceUrl 값을 주입 (null 방지용 빈 문자열 처리)
+    setEditForm({title: post.title, summary: post.summary || "", sourceUrl: post.sourceUrl || ""});
   };
 
   const handleUpdate = () => {
     if (!selectedPost) return;
-    updatePost(
-      {id: selectedPost.id, payload: editForm},
-      {
-        onSuccess: () => setSelectedPost(null),
-      },
-    );
+    updatePost({id: selectedPost.id, payload: editForm}, {onSuccess: () => setSelectedPost(null)});
   };
 
   const handleStatusChange = (status: PostStatus) => {
     if (!selectedPost) return;
-    changeStatus(
-      {id: selectedPost.id, status},
-      {
-        onSuccess: () => setSelectedPost(null),
-      },
-    );
+    changeStatus({id: selectedPost.id, status}, {onSuccess: () => setSelectedPost(null)});
   };
 
-  // 테스트용 자동 생성 핸들러
-  const handleGenerateMock = () => {
-    generatePost({type: "MODEL_INFO", targetDate: "2026-04-09", vendorId: 10});
+  const handleGenerateSubmit = () => {
+    if (generateForm.type === "MODEL_INFO" && !generateForm.vendorId) {
+      toast.error("MODEL_INFO 타입은 벤더 ID를 반드시 입력해야 합니다.");
+      return;
+    }
+
+    generatePost(
+      {
+        type: generateForm.type,
+        targetDate: generateForm.targetDate,
+        vendorId: generateForm.type === "MODEL_INFO" ? Number(generateForm.vendorId) : undefined,
+      },
+      {
+        onSuccess: () => {
+          setIsGenerateModalOpen(false);
+          setGenerateForm({...generateForm, vendorId: ""});
+        },
+      },
+    );
   };
 
   return (
@@ -54,7 +71,7 @@ export default function AdminCommunityPage() {
             <h1 className="text-3xl font-bold text-slate-900">커뮤니티 관리 콘솔</h1>
             <p className="text-slate-500 mt-2">게시글 검수, 수정 및 발행 상태를 관리합니다.</p>
           </div>
-          <Button onClick={handleGenerateMock} className="bg-amber-600 hover:bg-amber-700">
+          <Button onClick={() => setIsGenerateModalOpen(true)} className="bg-amber-600 hover:bg-amber-700">
             + 새 게시글 자동 생성
           </Button>
         </div>
@@ -91,7 +108,7 @@ export default function AdminCommunityPage() {
                 </tr>
               </thead>
               <tbody>
-                {posts?.contents.map((post) => (
+                {posts?.contents?.map((post) => (
                   <tr key={post.id} className="border-b border-slate-100 hover:bg-slate-50">
                     <td className="p-4 text-slate-500">{post.id}</td>
                     <td className="p-4">
@@ -108,7 +125,20 @@ export default function AdminCommunityPage() {
                       </span>
                     </td>
                     <td className="p-4 text-slate-600">{post.type}</td>
-                    <td className="p-4 font-medium text-slate-900">{post.title}</td>
+                    <td className="p-4 font-medium text-slate-900 flex items-center gap-2">
+                      <span className="line-clamp-1">{post.title}</span>
+                      {/* 🌟 원본 링크가 있으면 클릭할 수 있는 아이콘 렌더링 */}
+                      {post.sourceUrl && (
+                        <a
+                          href={post.sourceUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-blue-500 hover:text-blue-700"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      )}
+                    </td>
                     <td className="p-4 text-slate-500">{format(new Date(post.createdAt), "yyyy-MM-dd")}</td>
                     <td className="p-4 text-center">
                       <Button variant="outline" size="sm" onClick={() => openEditModal(post)}>
@@ -117,12 +147,73 @@ export default function AdminCommunityPage() {
                     </td>
                   </tr>
                 ))}
+                {posts?.contents?.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="p-10 text-center text-slate-500">
+                      조건에 맞는 게시글이 없습니다.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           )}
         </div>
 
-        {/* 검수/수정 모달 */}
+        {/* 1. 자동 생성 모달 */}
+        <Dialog open={isGenerateModalOpen} onOpenChange={setIsGenerateModalOpen}>
+          <DialogContent className="max-w-md bg-white">
+            <DialogHeader>
+              <DialogTitle>새 게시글 자동 생성</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 my-4">
+              <div>
+                <label className="text-sm font-bold text-slate-700 block mb-1">게시글 타입</label>
+                <select
+                  className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                  value={generateForm.type}
+                  onChange={(e) => setGenerateForm({...generateForm, type: e.target.value as PostType})}
+                >
+                  <option value="MODEL_INFO">AI 모델 정보 (MODEL_INFO)</option>
+                  <option value="GENERAL">일반 소식 (GENERAL)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm font-bold text-slate-700 block mb-1">대상 날짜 (Target Date)</label>
+                <Input
+                  type="date"
+                  value={generateForm.targetDate}
+                  onChange={(e) => setGenerateForm({...generateForm, targetDate: e.target.value})}
+                />
+              </div>
+
+              {generateForm.type === "MODEL_INFO" && (
+                <div>
+                  <label className="text-sm font-bold text-slate-700 block mb-1">벤더 ID (숫자)</label>
+                  <Input
+                    type="number"
+                    placeholder="예: 10"
+                    value={generateForm.vendorId}
+                    onChange={(e) => setGenerateForm({...generateForm, vendorId: e.target.value})}
+                  />
+                  <p className="text-xs text-slate-500 mt-1">* 백엔드 원천 데이터를 긁어올 대상 벤더의 ID입니다.</p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-slate-100">
+              <Button variant="outline" onClick={() => setIsGenerateModalOpen(false)}>
+                취소
+              </Button>
+              <Button className="bg-amber-600 hover:bg-amber-700 text-white" onClick={handleGenerateSubmit}>
+                생성 요청하기
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* 2. 기존 검수/수정 모달 */}
+        {/* 2. 기존 검수/수정 모달 */}
         <Dialog open={!!selectedPost} onOpenChange={(open) => !open && setSelectedPost(null)}>
           <DialogContent className="max-w-2xl bg-white">
             <DialogHeader>
@@ -130,19 +221,24 @@ export default function AdminCommunityPage() {
             </DialogHeader>
             <div className="space-y-4 my-4">
               <div>
-                <label className="text-sm font-bold text-slate-700">제목</label>
+                <label className="text-sm font-bold text-slate-700 block mb-1">제목</label>
                 <Input value={editForm.title} onChange={(e) => setEditForm({...editForm, title: e.target.value})} />
               </div>
+              {/* 🌟 요약을 Textarea로 변경하여 넓은 영역 확보 */}
               <div>
-                <label className="text-sm font-bold text-slate-700">요약</label>
-                <Input value={editForm.summary} onChange={(e) => setEditForm({...editForm, summary: e.target.value})} />
+                <label className="text-sm font-bold text-slate-700 block mb-1">요약</label>
+                <Textarea
+                  className="min-h-[150px] leading-relaxed"
+                  value={editForm.summary}
+                  onChange={(e) => setEditForm({...editForm, summary: e.target.value})}
+                />
               </div>
               <div>
-                <label className="text-sm font-bold text-slate-700">본문 (Markdown)</label>
-                <Textarea
-                  className="min-h-[200px]"
-                  value={editForm.body}
-                  onChange={(e) => setEditForm({...editForm, body: e.target.value})}
+                <label className="text-sm font-bold text-slate-700 block mb-1">원본 링크 (Source URL)</label>
+                <Input
+                  placeholder="https://..."
+                  value={editForm.sourceUrl}
+                  onChange={(e) => setEditForm({...editForm, sourceUrl: e.target.value})}
                 />
               </div>
             </div>
@@ -150,7 +246,14 @@ export default function AdminCommunityPage() {
             {/* 상태 변경 및 저장 액션 영역 */}
             <div className="flex justify-between border-t border-slate-100 pt-4 mt-4">
               <div className="flex gap-2">
-                <Button variant="destructive" onClick={() => handleStatusChange("HIDDEN")}>
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    if (selectedPost) {
+                      deletePost(selectedPost.id, {onSuccess: () => setSelectedPost(null)});
+                    }
+                  }}
+                >
                   삭제 (HIDDEN)
                 </Button>
                 <Button
@@ -165,7 +268,10 @@ export default function AdminCommunityPage() {
                 <Button variant="secondary" onClick={handleUpdate}>
                   내용만 저장
                 </Button>
-                <Button className="bg-green-600 hover:bg-green-700" onClick={() => handleStatusChange("PUBLISHED")}>
+                <Button
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                  onClick={() => handleStatusChange("PUBLISHED")}
+                >
                   발행 승인 (PUBLISHED)
                 </Button>
               </div>

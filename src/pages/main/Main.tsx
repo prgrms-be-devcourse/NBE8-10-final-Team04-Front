@@ -26,7 +26,7 @@ export default function Main() {
           <h1 className="mb-4 text-4xl font-extrabold tracking-tight md:text-6xl leading-tight">
             나에게 딱 맞는 AI 모델,
             <br />
-            <span className="text-blue-400">start-ai-io</span>에서 찾으세요
+            <span className="text-blue-400">start-ai-io </span>에서 찾으세요
           </h1>
           <p className="mb-10 max-w-2xl text-lg text-slate-400 md:text-xl leading-relaxed">
             복잡한 AI 생태계에서 당신의 비즈니스와 작업 환경에 최적화된 스킬을 <br className="hidden md:block" />

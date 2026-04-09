@@ -19,7 +19,9 @@ export function useChatbot() {
   useEffect(() => {
     async function fetchWelcome() {
       try {
-        const {data} = await apiClient.get("/api/chatbot/welcome");
+        const {data} = await apiClient.get("/api/chatbot/welcome", {
+          timeout: 30000,
+        });
         if (data && data.message) {
           setMessages([
             {
@@ -70,8 +72,7 @@ export function useChatbot() {
     setIsTyping(true);
 
     try {
-      // 🌟 백엔드 API 호출
-      const {data} = await apiClient.post("/api/chatbot", {question: userText});
+      const {data} = await apiClient.post("/api/chatbot", {question: userText}, {timeout: 30000});
 
       const aiResponseMsg: ChatMessage = {
         id: (Date.now() + 1).toString(),

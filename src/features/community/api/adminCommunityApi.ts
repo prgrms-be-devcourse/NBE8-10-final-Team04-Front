@@ -18,8 +18,8 @@ export const adminCommunityApi = {
     return data.data;
   },
 
-  // 게시글 수정
-  updatePost: async (postId: number, payload: {title: string; summary: string; body: string}) => {
+  // 🌟 게시글 수정 (body -> sourceUrl)
+  updatePost: async (postId: number, payload: {title: string; summary: string; sourceUrl: string}) => {
     const {data} = await apiClient.put<ApiResponse<CommunityPost>>(`/api/v1/admin/community/posts/${postId}`, payload);
     return data.data;
   },

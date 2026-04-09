@@ -54,12 +54,6 @@ export default function SubscribePage() {
             <li className="flex items-center gap-3 text-slate-700">
               <CheckCircle2 className="h-5 w-5 text-blue-500 shrink-0" /> 무제한 MCP 스킬 매칭
             </li>
-            <li className="flex items-center gap-3 text-slate-700">
-              <CheckCircle2 className="h-5 w-5 text-blue-500 shrink-0" /> 프리미엄 프롬프트 열람
-            </li>
-            <li className="flex items-center gap-3 text-slate-700">
-              <CheckCircle2 className="h-5 w-5 text-blue-500 shrink-0" /> 챗봇 컨텍스트 제한 해제
-            </li>
           </ul>
 
           <Button

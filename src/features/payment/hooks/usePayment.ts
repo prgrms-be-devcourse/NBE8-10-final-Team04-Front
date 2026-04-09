@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { loadPaymentWidget, type PaymentWidgetInstance } from '@tosspayments/payment-widget-sdk';
 import { useAuthStore } from '@/features/auth/stores/authStore';
 
-const CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY || 'test_ck_pP2YxJ4K879D1MOyabMWVRGZwXLO';
+const CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY
 
 export function usePayment(price: number) {
   const { user } = useAuthStore();

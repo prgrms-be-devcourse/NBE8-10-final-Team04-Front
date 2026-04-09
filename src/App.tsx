@@ -7,6 +7,8 @@ import {Toaster} from "sonner";
 import {queryClient} from "@/lib/queryClient";
 import Layout from "@/components/layout/Layout";
 import PageSkeleton from "@/components/common/PageSkeleton";
+// 🌟 우리가 만든 우측 하단 플로팅 버튼
+import ScrollToTop from "@/components/common/ScrollToTop";
 
 // 기존 및 신규 페이지들 모두 lazy import 처리 (성능 최적화)
 const Main = lazy(() => import("@/pages/main/Main"));
@@ -23,6 +25,7 @@ const Chatbot = lazy(() => import("@/pages/chatbot/Chatbot"));
 const MyPage = lazy(() => import("@/pages/mypage/MyPage"));
 const Login = lazy(() => import("@/pages/Login"));
 const AdminCommunityPage = lazy(() => import("@/pages/admin/AdminCommunityPage"));
+const PromptDetail = lazy(() => import("@/pages/prompt/PromptDetail"));
 
 // 결제 관련 페이지
 const SubscribePage = lazy(() => import("@/pages/payment/SubscribePage"));
@@ -30,7 +33,9 @@ const CheckoutPage = lazy(() => import("@/pages/payment/Checkout"));
 const SuccessPage = lazy(() => import("@/pages/payment/Success"));
 const FailPage = lazy(() => import("@/pages/payment/Fail"));
 
-function ScrollToTop() {
+// 🌟 충돌 해결: 컴포넌트 이름을 ScrollRestoration으로 변경합니다.
+// (페이지 이동 시 스크롤을 자동으로 최상단으로 올려주는 기능)
+function ScrollRestoration() {
   const {pathname} = useLocation();
 
   useEffect(() => {
@@ -44,7 +49,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        {/* 라우터 최상단에 스크롤 초기화 컴포넌트 배치 */}
+        {/* 🌟 1. 페이지 이동 시 자동으로 맨 위로 올려주는 기능 */}
+        <ScrollRestoration />
+
+        {/* 🌟 2. 화면 우측 하단에 항상 떠 있는 버튼 */}
         <ScrollToTop />
 
         <Layout>
@@ -58,6 +66,7 @@ function App() {
               <Route path="/update/:vendorId" element={<VendorDetailPage />} />
               <Route path="/mcp" element={<MCPMatchingPage />} />
               <Route path="/prompt" element={<Prompt />} />
+              <Route path="/prompt/:id" element={<PromptDetail />} />
               <Route path="/chatbot" element={<Chatbot />} />
               <Route path="/mypage" element={<MyPage />} />
               <Route path="/login" element={<Login />} />
