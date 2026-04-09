@@ -32,4 +32,10 @@
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-slate-400;
   }
+
+  /* src/index.css */
+  body[data-state='open'] {
+    overflow: hidden;
+    padding-right: 0px !important; /* 스크롤바 강제 보정 */
+  }
 }
