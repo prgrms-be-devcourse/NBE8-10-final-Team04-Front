@@ -19,6 +19,7 @@ const VendorDetailPage = lazy(() => import("@/pages/update/VendorDetailPage"));
 
 // MCP 맞춤 스킬 매칭 페이지
 const MCPMatchingPage = lazy(() => import("@/pages/mcp/MCPMatchingPage"));
+const McpGuidePage = lazy(() => import("@/pages/mcp/McpGuidePage"));
 
 const Prompt = lazy(() => import("@/pages/prompt/Prompt"));
 const Chatbot = lazy(() => import("@/pages/chatbot/Chatbot"));
@@ -65,6 +66,7 @@ function App() {
               <Route path="/update" element={<AIUpdatePage />} />
               <Route path="/update/:vendorId" element={<VendorDetailPage />} />
               <Route path="/mcp" element={<MCPMatchingPage />} />
+              <Route path="/mcp/guide" element={<McpGuidePage />} />
               <Route path="/prompt" element={<Prompt />} />
               <Route path="/prompt/:id" element={<PromptDetail />} />
               <Route path="/chatbot" element={<Chatbot />} />
