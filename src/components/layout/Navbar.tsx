@@ -1,5 +1,5 @@
 import {useState} from "react";
-import {Link, useNavigate} from "react-router-dom";
+import {Link, NavLink, useNavigate} from "react-router-dom"; // 🌟 NavLink 추가
 import {Menu as MenuIcon} from "lucide-react";
 import {PageInner} from "./PageLayout";
 import {useAuthStore} from "@/features/auth/stores/authStore";
@@ -17,62 +17,51 @@ export default function Navbar() {
     navigate("/");
   };
 
-const NavLinks = () => (
-  <>
-    <Link
-      to="/"
-      onClick={() => setIsOpen(false)}
-      className="text-sm font-medium text-[#222] hover:text-black transition-colors"
-    >
-      툴비교
-    </Link>
-    <Link
-      to="/update"
-      onClick={() => setIsOpen(false)}
-      className="text-sm font-medium text-[#222] hover:text-black transition-colors"
-    >
-      AI 정보
-    </Link>
-    <Link
-      to="/prompt"
-      onClick={() => setIsOpen(false)}
-      className="text-sm font-medium text-[#222] hover:text-black transition-colors"
-    >
-      프롬프트
-    </Link>
-    {/* 👇 여기에 MCP 매칭 메뉴 추가 */}
-    <Link
-      to="/mcp"
-      onClick={() => setIsOpen(false)}
-      className="text-sm font-medium text-[#222] hover:text-black transition-colors"
-    >
-      스킬 매칭
-    </Link>
-    <Link
-      to="/chatbot"
-      onClick={() => setIsOpen(false)}
-      className="text-sm font-medium text-[#222] hover:text-black transition-colors"
-    >
-      AI 챗봇
-    </Link>
-    <Link
-      to="/mypage"
-      onClick={() => setIsOpen(false)}
-      className="text-sm font-medium text-[#222] hover:text-black transition-colors"
-    >
-      마이페이지
-    </Link>
-    {user?.role === "ADMIN" && (
-      <Link
-        to="/admin"
-        onClick={() => setIsOpen(false)}
-        className="text-sm font-bold text-amber-600 hover:text-amber-800 transition-colors ml-4"
-      >
-        관리자 콘솔
-      </Link>
-    )}
-  </>
-);
+  // 🌟 일반 메뉴용 조건부 스타일링 함수
+  const getNavLinkClass = ({ isActive }: { isActive: boolean }) => {
+    return `text-sm transition-colors ${
+      isActive
+        ? "font-bold text-slate-900" // 현재 페이지: 진한 텍스트 & 볼드
+        : "font-medium text-slate-500 hover:text-slate-900" // 다른 페이지: 적당한 회색 & 마우스 올리면 진해짐
+    }`;
+  };
+
+  // 🌟 관리자 메뉴용 조건부 스타일링 함수
+  const getAdminLinkClass = ({ isActive }: { isActive: boolean }) => {
+    return `text-sm transition-colors md:ml-4 ${
+      isActive
+        ? "font-bold text-amber-700" 
+        : "font-bold text-amber-500 hover:text-amber-700"
+    }`;
+  };
+
+  const NavLinks = () => (
+    <>
+      <NavLink to="/" onClick={() => setIsOpen(false)} className={getNavLinkClass}>
+        메인
+      </NavLink>
+      <NavLink to="/update" onClick={() => setIsOpen(false)} className={getNavLinkClass}>
+        AI 정보
+      </NavLink>
+      <NavLink to="/prompt" onClick={() => setIsOpen(false)} className={getNavLinkClass}>
+        프롬프트
+      </NavLink>
+      <NavLink to="/mcp" onClick={() => setIsOpen(false)} className={getNavLinkClass}>
+        스킬 매칭
+      </NavLink>
+      <NavLink to="/chatbot" onClick={() => setIsOpen(false)} className={getNavLinkClass}>
+        AI 챗봇
+      </NavLink>
+      <NavLink to="/mypage" onClick={() => setIsOpen(false)} className={getNavLinkClass}>
+        마이페이지
+      </NavLink>
+      {user?.role === "ADMIN" && (
+        <NavLink to="/admin" onClick={() => setIsOpen(false)} className={getAdminLinkClass}>
+          관리자 콘솔
+        </NavLink>
+      )}
+    </>
+  );
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[#e5e5e5] bg-white">
