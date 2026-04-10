@@ -1,14 +1,18 @@
+// src/features/mcp/hooks/useMcpTokens.ts
 import {useQuery, useMutation, useQueryClient} from "@tanstack/react-query";
 import {mcpApi} from "../api/mcpApi";
 import {toast} from "sonner";
+import {useAuth} from "@/features/auth/hooks/useAuth"; // 🌟 인증 훅 불러오기
 
 export function useMcpTokens() {
   const queryClient = useQueryClient();
   const queryKey = ["mcp", "tokens"];
+  const {isAuthenticated} = useAuth(); // 🌟 로그인 상태 확인 (user 객체가 있다면 !!user 로 체크)
 
   const tokensQuery = useQuery({
     queryKey,
     queryFn: mcpApi.getTokens,
+    enabled: !!isAuthenticated, // 🌟 로그인 상태일 때만 자동 조회 실행!
   });
 
   const createMutation = useMutation({

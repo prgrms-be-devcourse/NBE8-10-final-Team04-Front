@@ -1,4 +1,5 @@
 // src/pages/prompt/Prompt.tsx
+import {useEffect, useRef} from "react";
 import {Search as SearchIcon, FileText, Loader2} from "lucide-react";
 import {PageLayout} from "@/components/layout/PageLayout";
 import {Input} from "@/components/ui/input";
@@ -18,8 +19,34 @@ export default function Prompt() {
     filteredPrompts,
     totalElements,
     categories,
-    isLoading, // 🌟 서버 로딩 상태
+    isLoading,
+    // 🌟 무한 스크롤을 위한 함수와 상태 가져오기
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
   } = usePrompts();
+
+  // 🌟 스크롤 감지 센서 역할을 할 텅 빈 요소를 참조하기 위한 ref
+  const observerElem = useRef<HTMLDivElement>(null);
+
+  // 🌟 화면에 observerElem 요소가 보이면 다음 페이지를 요청하는 로직
+  useEffect(() => {
+    const element = observerElem.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // 요소가 화면에 나타났고(isIntersecting), 다음 페이지가 존재하며, 현재 불러오는 중이 아닐 때 요청!
+        if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      {threshold: 0.5}, // 요소가 50% 정도 화면에 보이면 작동
+    );
+
+    observer.observe(element);
+    return () => observer.unobserve(element);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return (
     <PageLayout
@@ -59,57 +86,66 @@ export default function Prompt() {
           총 <span className="font-bold text-primary">{totalElements}</span>개의 프롬프트가 있습니다.
         </div>
 
-        {/* 데이터 로딩 중 표시 */}
-        {isLoading ? (
+        {/* 첫 데이터 로딩 중 표시 */}
+        {isLoading && filteredPrompts.length === 0 ? (
           <div className="flex justify-center py-20">
             <Loader2 className="h-10 w-10 animate-spin text-primary" />
           </div>
         ) : (
-          /* 프롬프트 카드 그리드 */
-          <motion.section
-            className="grid grid-cols-1 gap-6 md:grid-cols-2"
-            initial="hidden"
-            animate="visible"
-            variants={{
-              hidden: {opacity: 0},
-              visible: {
-                opacity: 1,
-                transition: {staggerChildren: 0.05},
-              },
-            }}
-          >
-            {filteredPrompts.map((prompt) => (
-              <motion.div
-                key={prompt.id}
-                variants={{
-                  hidden: {opacity: 0, y: 20},
-                  visible: {opacity: 1, y: 0, transition: {duration: 0.4}},
-                }}
-              >
-                <PromptCard prompt={prompt} />
-              </motion.div>
-            ))}
+          <>
+            {/* 프롬프트 카드 그리드 */}
+            <motion.section
+              className="grid grid-cols-1 gap-6 md:grid-cols-2"
+              initial="hidden"
+              animate="visible"
+              variants={{
+                hidden: {opacity: 0},
+                visible: {
+                  opacity: 1,
+                  transition: {staggerChildren: 0.05},
+                },
+              }}
+            >
+              {filteredPrompts.map((prompt) => (
+                <motion.div
+                  key={prompt.id}
+                  variants={{
+                    hidden: {opacity: 0, y: 20},
+                    visible: {opacity: 1, y: 0, transition: {duration: 0.4}},
+                  }}
+                >
+                  <PromptCard prompt={prompt} />
+                </motion.div>
+              ))}
 
-            {/* 결과가 없을 경우 */}
-            {filteredPrompts.length === 0 && (
-              <EmptyState
-                icon={FileText}
-                title="프롬프트를 찾을 수 없습니다"
-                description="검색 조건에 맞는 프롬프트가 없습니다. 다른 키워드로 검색해 보세요."
-                action={
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setSearchQuery("");
-                      setActiveCategory("전체");
-                    }}
-                  >
-                    초기화
-                  </Button>
-                }
-              />
-            )}
-          </motion.section>
+              {/* 결과가 없을 경우 */}
+              {filteredPrompts.length === 0 && (
+                <div className="col-span-1 md:col-span-2">
+                  <EmptyState
+                    icon={FileText}
+                    title="프롬프트를 찾을 수 없습니다"
+                    description="검색 조건에 맞는 프롬프트가 없습니다. 다른 키워드로 검색해 보세요."
+                    action={
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setSearchQuery("");
+                          setActiveCategory("전체");
+                        }}
+                      >
+                        초기화
+                      </Button>
+                    }
+                  />
+                </div>
+              )}
+            </motion.section>
+
+            {/* 🌟 무한 스크롤 감지 센서 & 다음 페이지 로딩 인디케이터 */}
+            <div ref={observerElem} className="py-8 flex justify-center h-20">
+              {isFetchingNextPage && <Loader2 className="h-8 w-8 animate-spin text-primary opacity-50" />}
+            </div>
+          </>
         )}
       </div>
     </PageLayout>

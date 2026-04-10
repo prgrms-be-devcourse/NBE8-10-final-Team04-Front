@@ -13,6 +13,8 @@ import remarkGfm from "remark-gfm";
 import {Prism as SyntaxHighlighter} from "react-syntax-highlighter";
 import {vscDarkPlus} from "react-syntax-highlighter/dist/esm/styles/prism";
 import {useMcpTokens} from "@/features/mcp/hooks/useMcpTokens";
+import {useNavigate} from "react-router-dom";
+import {useAuth} from "@/features/auth/hooks/useAuth";
 
 const GUIDE_MARKDOWN = `
 ## MCP 연결 방법
@@ -54,6 +56,8 @@ gemini mcp add --transport http start-ai-hub https://api.han-minhee.site/mcp \\
 `;
 
 export default function McpGuidePage() {
+  const navigate = useNavigate();
+  const {isAuthenticated} = useAuth(); // 🌟 로그인 상태 가져오기 (프로젝트 상황에 맞춰 수정)
   const {tokens, isLoading, createToken, deleteToken, isCreating} = useMcpTokens();
 
   const [form, setForm] = useState({
@@ -169,87 +173,115 @@ export default function McpGuidePage() {
             <KeyRound className="w-6 h-6 text-amber-600" /> MCP 토큰 발급 및 관리
           </h2>
 
-          <Card className="p-6 bg-white border-slate-200 shadow-sm">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div className="md:col-span-2">
-                <label className="text-sm font-bold text-slate-700 block mb-1">토큰 이름 (용도)</label>
-                <Input
-                  placeholder="예: Claude Desktop 용"
-                  value={form.name}
-                  onChange={(e) => setForm({...form, name: e.target.value})}
-                />
-              </div>
-              <div>
-                <label className="text-sm font-bold text-slate-700 block mb-1">만료일</label>
-                <Input
-                  type="date"
-                  value={form.expiresAt}
-                  onChange={(e) => setForm({...form, expiresAt: e.target.value})}
-                />
-              </div>
-            </div>
-            <Button
-              onClick={handleCreateToken}
-              disabled={isCreating}
-              className="bg-slate-900 hover:bg-slate-800 text-white w-full md:w-auto"
-            >
-              {isCreating ? "발급 중..." : "새 토큰 발급"}
-            </Button>
-          </Card>
+          {isAuthenticated ? (
+            /* ================================================= */
+            /* 🟢 로그인 된 상태: 기존 토큰 관리 UI 보여주기 */
+            /* ================================================= */
+            <>
+              <Card className="p-6 bg-white border-slate-200 shadow-sm">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div className="md:col-span-2">
+                    <label className="text-sm font-bold text-slate-700 block mb-1">토큰 이름 (용도)</label>
+                    <Input
+                      placeholder="예: Claude Desktop 용"
+                      value={form.name}
+                      onChange={(e) => setForm({...form, name: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-bold text-slate-700 block mb-1">만료일</label>
+                    <Input
+                      type="date"
+                      value={form.expiresAt}
+                      onChange={(e) => setForm({...form, expiresAt: e.target.value})}
+                    />
+                  </div>
+                </div>
+                <Button
+                  onClick={handleCreateToken}
+                  disabled={isCreating}
+                  className="bg-slate-900 hover:bg-slate-800 text-white w-full md:w-auto"
+                >
+                  {isCreating ? "발급 중..." : "새 토큰 발급"}
+                </Button>
+              </Card>
 
-          <Card className="bg-white border-slate-200 overflow-hidden shadow-sm">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-600">
-                <tr>
-                  <th className="p-4 font-semibold">이름</th>
-                  <th className="p-4 font-semibold">토큰 Prefix</th>
-                  <th className="p-4 font-semibold">만료일</th>
-                  <th className="p-4 font-semibold text-center">관리</th>
-                </tr>
-              </thead>
-              <tbody>
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={4} className="p-8 text-center text-slate-400">
-                      불러오는 중...
-                    </td>
-                  </tr>
-                ) : tokens.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="p-8 text-center text-slate-400">
-                      발급된 토큰이 없습니다.
-                    </td>
-                  </tr>
-                ) : (
-                  tokens.map((token) => (
-                    <tr
-                      key={token.tokenId}
-                      className={`border-b border-slate-100 ${token.revoked ? "bg-slate-50 opacity-50" : "hover:bg-slate-50 transition-colors"}`}
-                    >
-                      <td className="p-4 font-medium text-slate-900">
-                        {token.name}
-                        {token.revoked && <span className="ml-2 text-xs text-red-500 font-bold">(폐기됨)</span>}
-                      </td>
-                      <td className="p-4 font-mono text-slate-500">{token.tokenPrefix}...</td>
-                      <td className="p-4 text-slate-500">{format(new Date(token.expiresAt), "yyyy-MM-dd")}</td>
-                      <td className="p-4 text-center">
-                        {!token.revoked && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => deleteToken(token.tokenId)}
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </td>
+              <Card className="bg-white border-slate-200 overflow-hidden shadow-sm">
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-600">
+                    <tr>
+                      <th className="p-4 font-semibold">이름</th>
+                      <th className="p-4 font-semibold">토큰 Prefix</th>
+                      <th className="p-4 font-semibold">만료일</th>
+                      <th className="p-4 font-semibold text-center">관리</th>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </Card>
+                  </thead>
+                  <tbody>
+                    {isLoading ? (
+                      <tr>
+                        <td colSpan={4} className="p-8 text-center text-slate-400">
+                          불러오는 중...
+                        </td>
+                      </tr>
+                    ) : tokens.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="p-8 text-center text-slate-400">
+                          발급된 토큰이 없습니다.
+                        </td>
+                      </tr>
+                    ) : (
+                      tokens.map((token) => (
+                        <tr
+                          key={token.tokenId}
+                          className={`border-b border-slate-100 ${token.revoked ? "bg-slate-50 opacity-50" : "hover:bg-slate-50 transition-colors"}`}
+                        >
+                          <td className="p-4 font-medium text-slate-900">
+                            {token.name}
+                            {token.revoked && <span className="ml-2 text-xs text-red-500 font-bold">(폐기됨)</span>}
+                          </td>
+                          <td className="p-4 font-mono text-slate-500">{token.tokenPrefix}...</td>
+                          <td className="p-4 text-slate-500">{format(new Date(token.expiresAt), "yyyy-MM-dd")}</td>
+                          <td className="p-4 text-center">
+                            {!token.revoked && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => deleteToken(token.tokenId)}
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </Card>
+            </>
+          ) : (
+            /* ================================================= */
+            /* 🔴 비로그인 상태: 로그인 유도 UI 보여주기 */
+            /* ================================================= */
+            <Card className="p-10 bg-white border-slate-200 shadow-sm flex flex-col items-center justify-center text-center">
+              <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                <KeyRound className="w-8 h-8 text-slate-400" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">로그인이 필요합니다</h3>
+              <p className="text-slate-500 mb-6 max-w-md leading-relaxed">
+                MCP 토큰을 발급받고 개인화된 AI 스킬 매칭을 사용하려면
+                <br />
+                먼저 로그인을 진행해 주세요.
+              </p>
+              <Button
+                onClick={() => navigate("/login")}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-12 px-8 rounded-xl transition-all hover:scale-105 shadow-md shadow-blue-500/20"
+              >
+                로그인 하러 가기
+              </Button>
+            </Card>
+          )}
         </div>
 
         {/* 3. 새 토큰 발급 완료 모달 */}

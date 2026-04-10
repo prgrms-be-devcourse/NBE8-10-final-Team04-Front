@@ -9,7 +9,8 @@ import {queryClient} from "@/lib/queryClient";
 export function useAuth() {
   const navigate = useNavigate();
   const location = useLocation();
-  const {setAuth, clearAuth, refreshToken} = useAuthStore();
+  // 🌟 user 객체도 스토어에서 가져옵니다.
+  const {user, setAuth, clearAuth, refreshToken} = useAuthStore();
 
   const from = location.state?.from?.pathname || "/";
 
@@ -18,9 +19,9 @@ export function useAuth() {
     mutationFn: (idToken: string) => authApi.googleLogin(idToken),
     onSuccess: (data) => {
       const {accessToken, refreshToken, memberId, name, email, role} = data;
-      const user = {memberId, name, email, role};
+      const loggedInUser = {memberId, name, email, role};
 
-      setAuth(accessToken, refreshToken, user);
+      setAuth(accessToken, refreshToken, loggedInUser);
 
       toast.success(`${name}님 환영합니다!`);
       navigate(from, {replace: true});
@@ -48,6 +49,9 @@ export function useAuth() {
   });
 
   return {
+    // 🌟 컴포넌트에서 로그인 상태를 알 수 있도록 user와 isAuthenticated 반환
+    user,
+    isAuthenticated: !!user,
     loginWithGoogle: loginMutation.mutate,
     isLoggingIn: loginMutation.isPending,
     logout: logoutMutation.mutate,
