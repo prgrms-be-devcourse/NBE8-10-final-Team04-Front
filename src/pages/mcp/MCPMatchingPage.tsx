@@ -1,5 +1,6 @@
+// src/pages/mcp/MCPMatchingPage.tsx
 import {useNavigate} from "react-router-dom";
-import {Zap, Target, Layers, ArrowRight, CheckCircle2, Sparkles} from "lucide-react";
+import {Zap, Target, Layers, ArrowRight, CheckCircle2, Sparkles, Terminal} from "lucide-react";
 import {PageLayout, PageInner} from "@/components/layout/PageLayout";
 import {Button} from "@/components/ui/button";
 import {Card, CardHeader, CardTitle, CardContent} from "@/components/ui/card";
@@ -31,13 +32,25 @@ export default function MCPMatchingPage() {
             <br className="hidden md:block" />
             가장 최적화된 AI 모델과 스킬셋을 당신의 작업 환경에 자동으로 세팅합니다.
           </p>
-          <Button
-            size="lg"
-            className="h-14 rounded-full bg-blue-600 px-8 text-base font-bold text-white hover:bg-blue-700 hover:scale-105 transition-all shadow-lg shadow-blue-500/25"
-            onClick={() => navigate("/subscribe")}
-          >
-            무제한 멤버십 시작하기 <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
+
+          {/* 🌟 버튼 영역: 구독 버튼(Primary)과 가이드 버튼(Secondary) 병렬 배치 */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Button
+              size="lg"
+              className="h-14 rounded-full bg-blue-600 px-8 text-base font-bold text-white hover:bg-blue-700 hover:scale-105 transition-all shadow-lg shadow-blue-500/25 w-full sm:w-auto"
+              onClick={() => navigate("/subscribe")}
+            >
+              무제한 멤버십 시작하기 <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="h-14 rounded-full border-slate-700 bg-slate-900/50 px-8 text-base font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition-all w-full sm:w-auto backdrop-blur-sm"
+              onClick={() => navigate("/mcp/guide")}
+            >
+              <Terminal className="mr-2 h-5 w-5 text-slate-400" /> 연동 가이드 및 토큰 발급
+            </Button>
+          </div>
         </PageInner>
       </section>
 
@@ -59,7 +72,8 @@ export default function MCPMatchingPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-slate-600 leading-relaxed">
-                  프로젝트의 배경, 목표, 제약사항 등을 깊이 있게 분석하여 마치 전문가처럼 당신의 맥락을 100% 이해하는 AI를 구성합니다.
+                  프로젝트의 배경, 목표, 제약사항 등을 깊이 있게 분석하여 마치 전문가처럼 당신의 맥락을 100% 이해하는
+                  AI를 구성합니다.
                 </p>
               </CardContent>
             </Card>
@@ -73,7 +87,8 @@ export default function MCPMatchingPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-slate-600 leading-relaxed">
-                  OpenAI, Anthropic, Google 등 수많은 모델 중 현재 작업에 가장 뛰어난 성능을 낼 수 있는 모델과 스킬을 자동으로 매칭합니다.
+                  OpenAI, Anthropic, Google 등 수많은 모델 중 현재 작업에 가장 뛰어난 성능을 낼 수 있는 모델과 스킬을
+                  자동으로 매칭합니다.
                 </p>
               </CardContent>
             </Card>
@@ -87,7 +102,8 @@ export default function MCPMatchingPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-slate-600 leading-relaxed">
-                  어떤 AI를 어떻게 써야 할지 고민할 필요가 없습니다. 클릭 몇 번으로 즉시 사용 가능한 AI 워크플로우를 얻으세요.
+                  어떤 AI를 어떻게 써야 할지 고민할 필요가 없습니다. 클릭 몇 번으로 즉시 사용 가능한 AI 워크플로우를
+                  얻으세요.
                 </p>
               </CardContent>
             </Card>
@@ -125,8 +141,7 @@ export default function MCPMatchingPage() {
               <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-6 rounded-2xl border border-slate-100 bg-slate-50 shadow-sm">
                 <h3 className="font-bold text-lg text-slate-900 mb-2">MCP 기반 스킬 매칭 및 분석</h3>
                 <p className="text-slate-600 text-sm leading-relaxed">
-                  입력된 정보를 바탕으로 시스템이 최적의 모델과 플러그인(스킬) 조합을
-                  분석합니다.
+                  입력된 정보를 바탕으로 시스템이 최적의 모델과 플러그인(스킬) 조합을 분석합니다.
                 </p>
               </div>
             </div>
@@ -139,8 +154,7 @@ export default function MCPMatchingPage() {
               <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-6 rounded-2xl border border-slate-100 bg-slate-50 shadow-sm">
                 <h3 className="font-bold text-lg text-slate-900 mb-2">실무 적용 및 지속적인 보정</h3>
                 <p className="text-slate-600 text-sm leading-relaxed">
-                  매칭된 솔루션은 즉시 사용 가능하며, 피드백을 통해 AI의 컨텍스트를 더욱
-                  고도화합니다.
+                  매칭된 솔루션은 즉시 사용 가능하며, 피드백을 통해 AI의 컨텍스트를 더욱 고도화합니다.
                 </p>
               </div>
             </div>
@@ -151,21 +165,28 @@ export default function MCPMatchingPage() {
       {/* 4. Bottom CTA (결제 유도 배너) */}
       <section className="py-24 bg-white">
         <PageInner>
-          <div className="max-w-5xl mx-auto bg-slate-900 rounded-3xl p-8 md:p-16 flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl shadow-slate-900/20 relative overflow-hidden">
+          <div className="max-w-5xl mx-auto bg-slate-900 rounded-3xl p-8 md:p-12 lg:p-16 flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl shadow-slate-900/20 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-8 opacity-10">
               <Sparkles className="w-64 h-64 text-white" />
             </div>
 
-            <div className="relative z-10">
+            <div className="relative z-10 flex-1">
               <h2 className="text-3xl font-bold text-white mb-4">지금 바로 프리미엄을 경험하세요</h2>
-              <ul className="space-y-3">
+              <ul className="space-y-3 mb-6">
                 <li className="flex items-center gap-2 text-slate-300">
                   <CheckCircle2 className="h-5 w-5 text-blue-400" /> 무제한 MCP 스킬 매칭
                 </li>
               </ul>
+              {/* 🌟 텍스트 링크 형태로 가이드 이동 버튼 추가 */}
+              <button
+                onClick={() => navigate("/mcp/guide")}
+                className="text-sm font-medium text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors underline underline-offset-4"
+              >
+                MCP 환경 설정 가이드가 필요하신가요?
+              </button>
             </div>
 
-            <div className="relative z-10 w-full md:w-auto">
+            <div className="relative z-10 w-full md:w-auto shrink-0">
               <Button
                 size="lg"
                 className="w-full md:w-auto h-16 px-8 rounded-2xl bg-white text-slate-900 font-bold text-lg hover:bg-slate-100 transition-transform hover:scale-105"
@@ -173,7 +194,6 @@ export default function MCPMatchingPage() {
               >
                 무제한 멤버십 구독하기
               </Button>
-              {/* {<p className="text-center text-slate-400 text-sm mt-4">언제든 해지 가능합니다.</p>} */}
             </div>
           </div>
         </PageInner>
