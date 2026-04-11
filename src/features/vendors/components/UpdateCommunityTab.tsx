@@ -1,11 +1,14 @@
-// src/features/vendors/components/UpdateCommunityTab.tsx
 import {useState} from "react";
+import {useNavigate} from "react-router-dom"; // 🌟 네비게이트 추가
 import {MessageCircle, ChevronLeft, CornerDownRight, User, Trash2, ExternalLink} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {useCommunity} from "@/features/community/hooks/useCommunity";
+import {useAuthStore} from "@/features/auth/stores/authStore"; // 🌟 인증 스토어 추가
 
 export function UpdateCommunityTab({vendorId}: {vendorId: string}) {
+  const navigate = useNavigate();
+  const {user} = useAuthStore(); // 🌟 로그인 여부 확인
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
   const [newComment, setNewComment] = useState("");
   const [replyTo, setReplyTo] = useState<{id: number; author: string} | null>(null);
@@ -14,9 +17,14 @@ export function UpdateCommunityTab({vendorId}: {vendorId: string}) {
 
   const vendorPosts = posts?.contents.filter((p) => p.vendorId === Number(vendorId)) || [];
 
-  const formatDate = (dateString: string) => dateString.split("T");
+  // 🌟 에러 방지: dateString이 null인 경우를 대비한 방어 로직 추가
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return "날짜 정보 없음";
+    return dateString.split("T");
+  };
 
   const handleCommentSubmit = () => {
+    if (!user) return; // 로그인 안 했으면 실행 방지
     if (!newComment.trim()) return;
     createComment(
       {content: newComment, parentCommentId: replyTo?.id || null},
@@ -54,9 +62,8 @@ export function UpdateCommunityTab({vendorId}: {vendorId: string}) {
                 </span>
                 <h4 className="text-lg font-bold text-slate-900">{post.title}</h4>
               </div>
-              <span className="text-sm text-slate-500">{formatDate(post.publishedAt)}</span>
+              <span className="text-sm text-slate-500">{post.targetDate}</span>
             </div>
-            {/* 목록 뷰에서는 요약을 한 줄로 잘라서 표시 */}
             <p className="text-slate-600 mb-4 line-clamp-2">{post.summary}</p>
             <div className="flex items-center gap-1.5 text-sm text-slate-500 font-medium">
               <MessageCircle className="h-4 w-4" /> 게시글 보기
@@ -82,17 +89,14 @@ export function UpdateCommunityTab({vendorId}: {vendorId: string}) {
         <ChevronLeft className="h-4 w-4 mr-1" /> 목록으로
       </Button>
 
-      {/* 🌟 수정된 게시글 본문(상세 뷰) */}
       <div className="mb-10 pb-10 border-b border-slate-200">
         <h2 className="text-2xl font-bold text-slate-900 mb-2">{selectedPost?.title}</h2>
         <p className="text-sm text-slate-500 mb-6">{selectedPost && formatDate(selectedPost.publishedAt)}</p>
 
-        {/* 요약(Summary) 전체 표시 영역 */}
         <div className="text-slate-700 leading-relaxed whitespace-pre-wrap bg-slate-50 p-6 rounded-lg mb-4 text-[15px]">
           {selectedPost?.summary}
         </div>
 
-        {/* 원본 소스 링크 (버튼 형태) */}
         {selectedPost?.sourceUrl && (
           <a
             href={selectedPost.sourceUrl}
@@ -105,8 +109,8 @@ export function UpdateCommunityTab({vendorId}: {vendorId: string}) {
         )}
       </div>
 
-      {/* 댓글 작성란 */}
-      <div className="mb-8 flex flex-col gap-2">
+      {/* 🌟 댓글 작성란 (비로그인 상태 대응) */}
+      <div className="mb-8 flex flex-col gap-2 relative">
         {replyTo && (
           <div className="flex items-center justify-between bg-slate-100 px-3 py-2 rounded-md text-sm">
             <span className="text-slate-600">
@@ -117,15 +121,33 @@ export function UpdateCommunityTab({vendorId}: {vendorId: string}) {
             </button>
           </div>
         )}
-        <div className="flex gap-2">
+
+        <div className="flex gap-2 relative">
+          {/* 비로그인 시 덮어씌울 오버레이 레이어 */}
+          {!user && (
+            <div
+              className="absolute inset-0 z-10 bg-slate-50/40 backdrop-blur-[1px] rounded-md flex items-center justify-center cursor-pointer group"
+              onClick={() => navigate("/login")}
+            >
+              <div className="flex items-center gap-2 px-4 py-2">
+                <span className="text-xs font-bold text-slate-600">로그인 후 대화에 참여해보세요</span>
+              </div>
+            </div>
+          )}
+
           <Input
-            placeholder={replyTo ? "답글 내용을 입력하세요." : "업데이트 내용에 대한 의견을 자유롭게 나눠보세요!"}
+            disabled={!user}
+            placeholder={!user ? "" : replyTo ? "답글 내용을 입력하세요." : "의견을 나눠보세요!"}
             className="bg-slate-50"
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleCommentSubmit()}
           />
-          <Button onClick={handleCommentSubmit} className="bg-slate-800 text-white hover:bg-slate-700">
+          <Button
+            disabled={!user}
+            onClick={handleCommentSubmit}
+            className="bg-slate-800 text-white hover:bg-slate-700 shrink-0"
+          >
             작성하기
           </Button>
         </div>
@@ -146,7 +168,8 @@ export function UpdateCommunityTab({vendorId}: {vendorId: string}) {
                   <span className="font-bold text-slate-900 text-sm">{comment.authorName}</span>
                   <span className="text-xs text-slate-500">{formatDate(comment.createdAt)}</span>
                 </div>
-                {!comment.deleted && (
+                {/* 작성자 본인 확인 로직이 필요하다면 user?.name === comment.authorName 등으로 필터 가능 */}
+                {!comment.deleted && user && (
                   <button
                     onClick={() => deleteComment(comment.id)}
                     className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition-opacity"
@@ -159,7 +182,7 @@ export function UpdateCommunityTab({vendorId}: {vendorId: string}) {
                 {comment.deleted ? "삭제된 댓글입니다." : comment.content}
               </p>
 
-              {!comment.deleted && (
+              {!comment.deleted && user && (
                 <button
                   onClick={() => setReplyTo({id: comment.id, author: comment.authorName})}
                   className="text-xs text-slate-500 hover:text-slate-900 font-medium mb-4"
@@ -179,7 +202,7 @@ export function UpdateCommunityTab({vendorId}: {vendorId: string}) {
                           <span className="font-bold text-slate-900 text-xs">{reply.authorName}</span>
                           <span className="text-[10px] text-slate-500">{formatDate(reply.createdAt)}</span>
                         </div>
-                        {!reply.deleted && (
+                        {!reply.deleted && user && (
                           <button
                             onClick={() => deleteComment(reply.id)}
                             className="opacity-0 group-hover/reply:opacity-100 text-red-400 hover:text-red-600 transition-opacity"
