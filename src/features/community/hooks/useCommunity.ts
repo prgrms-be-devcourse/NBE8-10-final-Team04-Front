@@ -1,3 +1,4 @@
+// src/features/community/hooks/useCommunity.ts
 import {useQuery, useMutation, useQueryClient} from "@tanstack/react-query";
 import {communityApi} from "../api/communityApi";
 import {toast} from "sonner";
@@ -5,20 +6,17 @@ import {toast} from "sonner";
 export function useCommunity(postId?: number) {
   const queryClient = useQueryClient();
 
-  // 게시글 목록 (Vendor 상세 페이지에서 해당 Vendor의 글만 필터링해야 할 경우 활용)
   const postsQuery = useQuery({
     queryKey: ["community", "posts"],
     queryFn: () => communityApi.getPosts(),
   });
 
-  // 댓글 목록 조회
   const commentsQuery = useQuery({
     queryKey: ["community", "comments", postId],
     queryFn: () => communityApi.getComments(postId!),
     enabled: !!postId,
   });
 
-  // 댓글 작성 Mutation
   const createCommentMutation = useMutation({
     mutationFn: (payload: {content: string; parentCommentId?: number | null}) =>
       communityApi.createComment(postId!, payload),
@@ -28,7 +26,15 @@ export function useCommunity(postId?: number) {
     },
   });
 
-  // 댓글 삭제 Mutation
+  const updateCommentMutation = useMutation({
+    mutationFn: ({commentId, content}: {commentId: number; content: string}) =>
+      communityApi.updateComment(postId!, commentId, content),
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: ["community", "comments", postId]});
+      toast.success("댓글이 수정되었습니다.");
+    },
+  });
+
   const deleteCommentMutation = useMutation({
     mutationFn: (commentId: number) => communityApi.deleteComment(postId!, commentId),
     onSuccess: () => {
@@ -42,6 +48,7 @@ export function useCommunity(postId?: number) {
     comments: commentsQuery.data,
     isLoading: postsQuery.isLoading || commentsQuery.isLoading,
     createComment: createCommentMutation.mutate,
+    updateComment: updateCommentMutation.mutate,
     deleteComment: deleteCommentMutation.mutate,
   };
 }
