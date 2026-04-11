@@ -15,7 +15,11 @@ export function UpdateCommunityTab({vendorId}: {vendorId: string}) {
 
   const {posts, comments, isLoading, createComment, deleteComment} = useCommunity(selectedPostId || undefined);
 
-  const vendorPosts = posts?.contents.filter((p) => p.vendorId === Number(vendorId)) || [];
+  const vendorPosts = posts?.contents
+    ? [...posts.contents] // 원본 배열 변조 방지를 위해 복사본 생성
+        .filter((p) => p.vendorId === Number(vendorId))
+        .sort((a, b) => new Date(b.targetDate).getTime() - new Date(a.targetDate).getTime())
+    : [];
 
   // 🌟 에러 방지: dateString이 null인 경우를 대비한 방어 로직 추가
   const formatDate = (dateString: string | null) => {
