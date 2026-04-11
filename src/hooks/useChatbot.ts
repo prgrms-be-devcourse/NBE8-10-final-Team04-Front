@@ -2,9 +2,12 @@
 import {useState, useRef, useEffect, type FormEvent} from "react";
 import {type ChatMessage} from "@/types/chat.types";
 import {apiClient} from "@/lib/axios";
+import {useChatStore} from "@/features/chatbot/stores/chatStore"; // 🌟 스토어 임포트
 
 export function useChatbot() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  // 🌟 useState 대신 전역 스토어에서 messages와 setMessages를 가져옵니다.
+  const {messages, setMessages} = useChatStore();
+
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -18,6 +21,9 @@ export function useChatbot() {
   // 페이지 진입 시 Welcome 메시지 호출
   useEffect(() => {
     async function fetchWelcome() {
+      // 🌟 중요: 이미 대화 내역이 있다면(페이지를 이동했다가 돌아왔다면) Welcome API를 다시 호출하지 않음!
+      if (messages.length > 0) return;
+
       try {
         const {data} = await apiClient.get("/api/chatbot/welcome", {
           timeout: 30000,
@@ -49,8 +55,10 @@ export function useChatbot() {
         ]);
       }
     }
+
     fetchWelcome();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 마운트 시 한 번만 실행
 
   const handleSendMessage = async (e?: FormEvent, textOverride?: string) => {
     if (e) e.preventDefault();

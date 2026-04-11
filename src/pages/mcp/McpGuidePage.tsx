@@ -57,8 +57,11 @@ gemini mcp add --transport http start-ai-hub https://api.han-minhee.site/mcp \\
 
 export default function McpGuidePage() {
   const navigate = useNavigate();
-  const {isAuthenticated} = useAuth(); // 🌟 로그인 상태 가져오기 (프로젝트 상황에 맞춰 수정)
+  const {isAuthenticated} = useAuth();
   const {tokens, isLoading, createToken, deleteToken, isCreating} = useMcpTokens();
+
+  // 🌟 폐기된 토큰(revoked)은 제외하고 활성 토큰만 필터링
+  const activeTokens = tokens.filter((token) => !token.revoked);
 
   const [form, setForm] = useState({
     name: "",
@@ -73,7 +76,6 @@ export default function McpGuidePage() {
       return;
     }
 
-    // 🌟 백틱 문법 수정됨
     const expiresAtIso = `${form.expiresAt}T00:00:00`;
 
     try {
@@ -124,7 +126,6 @@ export default function McpGuidePage() {
                     {...props}
                   />
                 ),
-                // 🌟 코드 블록 커스텀: 복사 버튼 추가
                 code({node, inline, className, children, ...props}: any) {
                   const match = /language-(\w+)/.exec(className || "");
                   const codeString = String(children).replace(/\n$/, "");
@@ -174,9 +175,6 @@ export default function McpGuidePage() {
           </h2>
 
           {isAuthenticated ? (
-            /* ================================================= */
-            /* 🟢 로그인 된 상태: 기존 토큰 관리 UI 보여주기 */
-            /* ================================================= */
             <>
               <Card className="p-6 bg-white border-slate-200 shadow-sm">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -223,35 +221,30 @@ export default function McpGuidePage() {
                           불러오는 중...
                         </td>
                       </tr>
-                    ) : tokens.length === 0 ? (
+                    ) : activeTokens.length === 0 ? (
                       <tr>
                         <td colSpan={4} className="p-8 text-center text-slate-400">
-                          발급된 토큰이 없습니다.
+                          발급된 활성 토큰이 없습니다.
                         </td>
                       </tr>
                     ) : (
-                      tokens.map((token) => (
+                      activeTokens.map((token) => (
                         <tr
                           key={token.tokenId}
-                          className={`border-b border-slate-100 ${token.revoked ? "bg-slate-50 opacity-50" : "hover:bg-slate-50 transition-colors"}`}
+                          className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
                         >
-                          <td className="p-4 font-medium text-slate-900">
-                            {token.name}
-                            {token.revoked && <span className="ml-2 text-xs text-red-500 font-bold">(폐기됨)</span>}
-                          </td>
+                          <td className="p-4 font-medium text-slate-900">{token.name}</td>
                           <td className="p-4 font-mono text-slate-500">{token.tokenPrefix}...</td>
                           <td className="p-4 text-slate-500">{format(new Date(token.expiresAt), "yyyy-MM-dd")}</td>
                           <td className="p-4 text-center">
-                            {!token.revoked && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => deleteToken(token.tokenId)}
-                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => deleteToken(token.tokenId)}
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
                           </td>
                         </tr>
                       ))
@@ -261,9 +254,6 @@ export default function McpGuidePage() {
               </Card>
             </>
           ) : (
-            /* ================================================= */
-            /* 🔴 비로그인 상태: 로그인 유도 UI 보여주기 */
-            /* ================================================= */
             <Card className="p-10 bg-white border-slate-200 shadow-sm flex flex-col items-center justify-center text-center">
               <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
                 <KeyRound className="w-8 h-8 text-slate-400" />

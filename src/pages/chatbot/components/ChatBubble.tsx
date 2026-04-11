@@ -1,5 +1,6 @@
 // src/pages/chatbot/components/ChatBubble.tsx
-import {Bot, User, Star, ThumbsUp, AlertCircle, CheckCircle2} from "lucide-react";
+import {Bot, User, AlertCircle, CheckCircle2} from "lucide-react"; // 🌟 사용하지 않는 아이콘(Star, ThumbsUp) 제거
+import {useNavigate} from "react-router-dom"; // 🌟 네비게이션 훅 추가
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {type ChatMessage} from "@/types/chat.types";
@@ -12,6 +13,7 @@ interface ChatBubbleProps {
 
 export default function ChatBubble({message}: ChatBubbleProps) {
   const isUser = message.role === "user";
+  const navigate = useNavigate(); // 🌟 네비게이션 인스턴스 생성
 
   return (
     <div className={`flex w-full gap-4 p-4 ${isUser ? "justify-end" : "justify-start"}`}>
@@ -23,7 +25,7 @@ export default function ChatBubble({message}: ChatBubbleProps) {
       )}
 
       <div className={`flex flex-col gap-3 max-w-[85%] ${isUser ? "items-end" : "items-start"}`}>
-        {/* 🌟 기본 메시지 영역 (마크다운 적용) */}
+        {/* 기본 메시지 영역 (마크다운 적용) */}
         {message.content && (
           <div
             className={`rounded-2xl px-5 py-4 text-[15px] leading-relaxed shadow-sm ${
@@ -54,7 +56,7 @@ export default function ChatBubble({message}: ChatBubbleProps) {
                   ),
                   code: ({node, inline, className, children, ...props}: any) => {
                     return inline ? (
-                      // 인라인 코드 (예: `const a = 1;`)
+                      // 인라인 코드
                       <code
                         className="bg-slate-100 text-pink-600 px-1.5 py-0.5 rounded-md text-sm font-mono"
                         {...props}
@@ -62,7 +64,7 @@ export default function ChatBubble({message}: ChatBubbleProps) {
                         {children}
                       </code>
                     ) : (
-                      // 블록 코드 (예: ```javascript ... ```)
+                      // 블록 코드
                       <pre className="bg-slate-800 text-slate-50 p-4 rounded-xl overflow-x-auto text-sm my-4 font-mono shadow-inner">
                         <code {...props}>{children}</code>
                       </pre>
@@ -94,7 +96,7 @@ export default function ChatBubble({message}: ChatBubbleProps) {
         {message.topPick && (
           <Card className="w-full max-w-md bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 p-5 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
-              <Badge className="bg-blue-600 hover:bg-blue-700 border-none">Top Pick</Badge>
+              <Badge className="bg-blue-600 text-white border-none">Top Pick</Badge>
               <h4 className="font-bold text-slate-900 text-lg">{message.topPick.title}</h4>
             </div>
             <p className="text-sm text-slate-600 mb-3">{message.topPick.description}</p>
@@ -113,24 +115,18 @@ export default function ChatBubble({message}: ChatBubbleProps) {
           <div className="flex flex-col gap-3 w-full max-w-md mt-2">
             <p className="text-sm font-semibold text-slate-500 px-1">관련 추천 항목</p>
             {message.cards.map((card) => (
-              <Card key={card.id} className="p-4 bg-white border-slate-200 shadow-sm">
+              <Card
+                key={card.id}
+                // 🌟 클릭 시 Family 상세 페이지로 이동 & hover 시 스타일 변경되도록 수정
+                onClick={() => navigate(`/update/family/${card.id}`)}
+                className="p-4 bg-white border-slate-200 shadow-sm cursor-pointer hover:border-slate-800 transition-colors"
+              >
                 <div className="flex justify-between items-start mb-2">
                   <h4 className="font-bold text-slate-900">{card.title}</h4>
-                  <Badge variant="outline" className="text-xs">
-                    {card.type}
-                  </Badge>
                 </div>
                 <p className="text-sm text-slate-500 line-clamp-2 mb-3">{card.description}</p>
                 <div className="flex justify-between items-center text-xs text-slate-400">
-                  <span className="truncate max-w-[120px]">by {card.owner}</span>
-                  <div className="flex gap-3">
-                    <span className="flex items-center gap-1">
-                      <Star className="w-3 h-3 text-amber-400" /> {card.star}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <ThumbsUp className="w-3 h-3" /> {card.like}
-                    </span>
-                  </div>
+                  {/* 빈 여백 유지용 div */}
                 </div>
               </Card>
             ))}

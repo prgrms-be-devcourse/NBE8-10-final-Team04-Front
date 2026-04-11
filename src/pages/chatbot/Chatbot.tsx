@@ -8,17 +8,8 @@ import {Card} from "@/components/ui/card";
 import ChatBubble from "./components/ChatBubble";
 import {useChatbot} from "@/hooks/useChatbot";
 
-const DEFAULT_QUESTIONS = [
-  "요즘 가장 인기 있는 AI 툴은 뭐야?",
-  "기획자를 위한 프롬프트 작성법 알려줘",
-  "데이터 분석에 유용한 스킬 추천해 줘",
-];
-
 export default function Chatbot() {
   const {messages, input, setInput, isTyping, scrollRef, handleSendMessage} = useChatbot();
-
-  // 🌟 사용자가 한 번이라도 메시지를 보냈는지 확인하는 로직
-  const hasUserMessaged = messages.some((msg) => msg.role === "user");
 
   return (
     <PageLayout
@@ -71,21 +62,6 @@ export default function Chatbot() {
 
         {/* 입력창 영역 */}
         <div className="border-t border-slate-200 bg-white p-4 flex flex-col gap-3">
-          {/* 🌟 조건부 렌더링: 사용자가 대화를 시작하지 않았을 때만 렌더링 */}
-          {!hasUserMessaged && (
-            <div className="mx-auto flex w-full max-w-4xl flex-wrap gap-2 px-1 animate-in fade-in slide-in-from-bottom-2 duration-500">
-              {DEFAULT_QUESTIONS.map((question, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setInput(question)}
-                  className="text-sm bg-slate-50 border border-slate-200 text-slate-600 px-4 py-2 rounded-full hover:bg-slate-100 transition-colors shadow-sm"
-                >
-                  {question}
-                </button>
-              ))}
-            </div>
-          )}
-
           {/* 폼 영역 */}
           <form onSubmit={handleSendMessage} className="mx-auto flex w-full max-w-4xl items-center gap-2">
             <Input

@@ -1,3 +1,5 @@
+// src/pages/mypage/MyPage.tsx
+import {useState} from "react";
 import {User, CreditCard, Settings, LogOut, Clock, FileText} from "lucide-react";
 import {motion} from "framer-motion";
 
@@ -5,12 +7,31 @@ import {PageLayout} from "@/components/layout/PageLayout";
 import {Button} from "@/components/ui/button";
 import {Card} from "@/components/ui/card";
 import {Badge} from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 import {useMyPage} from "@/hooks/useMyPage";
 import ComingSoonCard from "@/components/shared/ComingSoonCard";
 
 export default function MyPage() {
-  const {user, membership, isSubscribed, handleLogout, handleSubscribeClick} = useMyPage();
+  const {
+    user,
+    isSubscribed,
+    remainingMcp,
+    isLoading,
+    isCanceling,
+    cancelSubscription,
+    handleLogout,
+    handleSubscribeClick,
+  } = useMyPage();
+
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
 
   if (!user) {
     return (
@@ -74,8 +95,9 @@ export default function MyPage() {
             </div>
           </Card>
 
-          <Card className="p-6 border-slate-200 shadow-sm bg-slate-900 text-white overflow-hidden relative">
-            <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+          {/* 🌟 수정된 부분: 기존의 어두운 테마(bg-slate-900)로 롤백 */}
+          <Card className="rounded-lg border p-6 border-slate-200 shadow-sm bg-slate-900 text-white overflow-hidden relative">
+            <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none text-white">
               <CreditCard className="w-24 h-24" />
             </div>
             <div className="relative z-10">
@@ -87,24 +109,35 @@ export default function MyPage() {
                       : "bg-slate-700 text-slate-300 hover:bg-slate-700"
                   }
                 >
-                  {isSubscribed ? "Premium" : "Free Plan"}
+                  {isSubscribed ? "Premium Plan" : "Free Plan"}
                 </Badge>
-                {isSubscribed && (
-                  <span className="text-[10px] text-slate-400 font-medium">
-                    다음 결제: {membership?.nextBillingDate}
-                  </span>
-                )}
               </div>
               <div className="mb-6">
-                <p className="text-xs text-slate-400 mb-1">MCP 매칭 잔여 횟수</p>
-                <p className="text-2xl font-black text-white">{membership?.remainingMcp}</p>
+                <p className="text-xs mb-1 text-slate-400">MCP 매칭 잔여 횟수</p>
+                <p className="text-2xl font-black text-white">
+                  {isLoading ? "확인 중..." : remainingMcp}
+                  {!isSubscribed && remainingMcp !== "무제한" && (
+                    <span className="text-sm font-normal text-slate-400 ml-1">회</span>
+                  )}
+                </p>
               </div>
-              <Button
-                className="w-full bg-white text-slate-900 hover:bg-slate-100 font-bold"
-                onClick={handleSubscribeClick}
-              >
-                {isSubscribed ? "멤버십 관리" : "무제한 멤버십 구독하기"}
-              </Button>
+
+              {/* 🌟 구독 상태에 따른 버튼 분기 */}
+              {isSubscribed ? (
+                <Button
+                  className="w-full bg-white/10 text-white hover:bg-white/20 font-bold border border-white/20"
+                  onClick={() => setIsCancelModalOpen(true)} // 해지 모달 열기
+                >
+                  멤버십 해지하기
+                </Button>
+              ) : (
+                <Button
+                  className="w-full bg-white text-slate-900 hover:bg-slate-100 font-bold"
+                  onClick={handleSubscribeClick} // 결제 페이지로 이동
+                >
+                  무제한 멤버십 시작하기
+                </Button>
+              )}
             </div>
           </Card>
         </motion.div>
@@ -138,6 +171,35 @@ export default function MyPage() {
           </div>
         </motion.div>
       </motion.div>
+
+      {/* 🌟 멤버십 해지 확인 다이얼로그 (모달) */}
+      <Dialog open={isCancelModalOpen} onOpenChange={setIsCancelModalOpen}>
+        <DialogContent className="bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-slate-900">정말 멤버십을 해지하시겠습니까?</DialogTitle>
+            <DialogDescription className="text-slate-500 pt-2 leading-relaxed">
+              지금 해지하더라도 <strong>미사용/당일 결제 건은 즉시 환불</strong>되며,
+              <br />
+              사용 이력이 있는 경우 <strong>다음 결제일까지 혜택이 유지</strong>됩니다.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 gap-2">
+            <Button variant="outline" onClick={() => setIsCancelModalOpen(false)}>
+              유지하기
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                cancelSubscription();
+                setIsCancelModalOpen(false);
+              }}
+              disabled={isCanceling}
+            >
+              {isCanceling ? "해지 처리 중..." : "해지하기"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageLayout>
   );
 }

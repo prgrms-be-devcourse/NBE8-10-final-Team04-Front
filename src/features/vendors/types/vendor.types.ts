@@ -13,3 +13,15 @@ export interface Vendor {
   active: boolean;
   deprecated: boolean;
 }
+
+// 🌟 API 응답에 맞춘 Family 상세 타입 추가
+export interface FamilyDetail {
+  id: number;
+  vendorName: string;
+  familyName: string;
+  commonDescription: string;
+  inputTypes: string[];
+  outputTypes: string[];
+  createdAt: string;
+  updatedAt: string;
+}
