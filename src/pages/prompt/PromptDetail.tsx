@@ -95,9 +95,6 @@ export default function PromptDetail() {
           >
             <ArrowLeft className="w-4 h-4 mr-2" /> 목록
           </Button>
-          <Button size="sm" onClick={handleCopy} className="bg-blue-600 hover:bg-blue-700 text-white">
-            <Copy className="w-4 h-4 mr-2" /> 본문 복사
-          </Button>
         </div>
 
         {/* 🌟 1. 메인 헤더 영역 (기본 정보 통합) */}
