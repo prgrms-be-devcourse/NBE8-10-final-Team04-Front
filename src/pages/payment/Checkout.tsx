@@ -1,5 +1,6 @@
+// src/pages/payment/Checkout.tsx
 import {useEffect, useRef, useState} from "react";
-import {useLocation} from "react-router-dom";
+import {useLocation, useNavigate} from "react-router-dom"; // 🌟 useNavigate 추가
 import {loadPaymentWidget} from "@tosspayments/payment-widget-sdk";
 import {useQuery} from "@tanstack/react-query";
 import {PageLayout, PageInner} from "@/components/layout/PageLayout";
@@ -7,13 +8,16 @@ import {Card} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {useAuthStore} from "@/features/auth/stores/authStore";
 import {paymentApi} from "@/features/payment/api/paymentApi";
+import {useMyPage} from "@/hooks/useMyPage"; // 🌟 구독 훅 추가
 
 const selector = "#payment-widget";
-const clientKey = import.meta.env.VITE_TOSS_CLIENT_KEY
+const clientKey = import.meta.env.VITE_TOSS_CLIENT_KEY;
 
 export default function CheckoutPage() {
   const location = useLocation();
+  const navigate = useNavigate(); // 🌟
   const {user} = useAuthStore();
+  const {isSubscribed, isLoading: isSubLoading} = useMyPage(); // 🌟
 
   // 값을 명시적으로 숫자로 변환하여 안전성 확보
   const selectedPrice = Number(location.state?.price ?? 990);
@@ -33,11 +37,18 @@ export default function CheckoutPage() {
   const [price] = useState(selectedPrice);
   const [paymentMethodsWidgetReady, isPaymentMethodsWidgetReady] = useState(false);
 
-  // 1. 위젯 렌더링 (단 한 번만 실행되도록 보장)
+  // 🌟 강제 접근 방지
   useEffect(() => {
-    if (paymentWidget == null) return;
+    if (!isSubLoading && isSubscribed) {
+      alert("이미 구독 중인 회원입니다. 마이페이지로 이동합니다.");
+      navigate("/mypage", {replace: true});
+    }
+  }, [isSubscribed, isSubLoading, navigate]);
 
-    // 🌟 이미 렌더링을 시도했다면 중단 (에러 방지 핵심 로직)
+  // 1. 위젯 렌더링
+  useEffect(() => {
+    if (paymentWidget == null || isSubscribed) return; // 🌟 구독 중이면 위젯 렌더링 안 함
+
     if (isWidgetRendered.current) return;
 
     try {
@@ -51,15 +62,14 @@ export default function CheckoutPage() {
 
       paymentMethodsWidget.on("ready", () => {
         paymentMethodsWidgetRef.current = paymentMethodsWidget;
-        isPaymentMethodsWidgetReady(true); // 버튼 활성화!
+        isPaymentMethodsWidgetReady(true);
       });
 
-      // 렌더링 완료 마킹
       isWidgetRendered.current = true;
     } catch (error) {
       console.error("위젯 초기화 실패:", error);
     }
-  }, [paymentWidget]); // 👈 price 의존성 없음 유지
+  }, [paymentWidget, isSubscribed, price]);
 
   // 2. 금액 업데이트 로직
   useEffect(() => {
@@ -86,6 +96,15 @@ export default function CheckoutPage() {
       alert("결제 요청 중 오류가 발생했습니다.");
     }
   };
+
+  // 로딩 중이거나 구독 상태면 화면 숨김
+  if (isSubLoading || isSubscribed) {
+    return (
+      <PageLayout className="bg-slate-50 min-h-screen">
+        <div /> {/* 빈 요소를 넣어 children 필수 타입 에러 해결 */}
+      </PageLayout>
+    );
+  }
 
   return (
     <PageLayout className="bg-slate-50 py-12">

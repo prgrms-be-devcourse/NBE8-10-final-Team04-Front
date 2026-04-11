@@ -16,6 +16,7 @@ const Main = lazy(() => import("@/pages/main/Main"));
 // AI 업데이트 및 상세 페이지
 const AIUpdatePage = lazy(() => import("@/pages/update/AIUpdatePage"));
 const VendorDetailPage = lazy(() => import("@/pages/update/VendorDetailPage"));
+const FamilyDetailPage = lazy(() => import("@/pages/update/FamilyDetailPage"));
 
 // MCP 맞춤 스킬 매칭 페이지
 const MCPMatchingPage = lazy(() => import("@/pages/mcp/MCPMatchingPage"));
@@ -34,8 +35,6 @@ const CheckoutPage = lazy(() => import("@/pages/payment/Checkout"));
 const SuccessPage = lazy(() => import("@/pages/payment/Success"));
 const FailPage = lazy(() => import("@/pages/payment/Fail"));
 
-// 🌟 충돌 해결: 컴포넌트 이름을 ScrollRestoration으로 변경합니다.
-// (페이지 이동 시 스크롤을 자동으로 최상단으로 올려주는 기능)
 function ScrollRestoration() {
   const {pathname} = useLocation();
 
@@ -65,6 +64,7 @@ function App() {
               {/* 기능 라우트 */}
               <Route path="/update" element={<AIUpdatePage />} />
               <Route path="/update/:vendorId" element={<VendorDetailPage />} />
+              <Route path="/update/family/:familyId" element={<FamilyDetailPage />} />
               <Route path="/mcp" element={<MCPMatchingPage />} />
               <Route path="/mcp/guide" element={<McpGuidePage />} />
               <Route path="/prompt" element={<Prompt />} />
