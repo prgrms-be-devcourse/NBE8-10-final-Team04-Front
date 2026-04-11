@@ -1,41 +1,60 @@
+// src/features/vendors/components/UpdateCommunityTab.tsx
 import {useState} from "react";
-import {useNavigate} from "react-router-dom"; // 🌟 네비게이트 추가
-import {MessageCircle, ChevronLeft, CornerDownRight, User, Trash2, ExternalLink} from "lucide-react";
+import {useNavigate} from "react-router-dom";
+import {MessageCircle, ChevronLeft, CornerDownRight, User, ExternalLink, Lock} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {useCommunity} from "@/features/community/hooks/useCommunity";
-import {useAuthStore} from "@/features/auth/stores/authStore"; // 🌟 인증 스토어 추가
+import {useAuthStore} from "@/features/auth/stores/authStore";
 
 export function UpdateCommunityTab({vendorId}: {vendorId: string}) {
   const navigate = useNavigate();
-  const {user} = useAuthStore(); // 🌟 로그인 여부 확인
+  const {user} = useAuthStore();
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
   const [newComment, setNewComment] = useState("");
   const [replyTo, setReplyTo] = useState<{id: number; author: string} | null>(null);
 
-  const {posts, comments, isLoading, createComment, deleteComment} = useCommunity(selectedPostId || undefined);
+  // 🌟 댓글 수정을 위한 상태 추가
+  const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+  const [editContent, setEditContent] = useState("");
+
+  const {posts, comments, isLoading, createComment, updateComment, deleteComment} = useCommunity(
+    selectedPostId || undefined,
+  );
 
   const vendorPosts = posts?.contents
-    ? [...posts.contents] // 원본 배열 변조 방지를 위해 복사본 생성
+    ? [...posts.contents]
         .filter((p) => p.vendorId === Number(vendorId))
         .sort((a, b) => new Date(b.targetDate).getTime() - new Date(a.targetDate).getTime())
     : [];
 
-  // 🌟 에러 방지: dateString이 null인 경우를 대비한 방어 로직 추가
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "날짜 정보 없음";
     return dateString.split("T");
   };
 
   const handleCommentSubmit = () => {
-    if (!user) return; // 로그인 안 했으면 실행 방지
-    if (!newComment.trim()) return;
+    if (!user || !newComment.trim()) return;
     createComment(
       {content: newComment, parentCommentId: replyTo?.id || null},
       {
         onSuccess: () => {
           setNewComment("");
           setReplyTo(null);
+        },
+      },
+    );
+  };
+
+  // 🌟 댓글 수정 저장 핸들러
+  const handleEditSubmit = (commentId: number) => {
+    if (!editContent.trim()) return;
+    updateComment(
+      {commentId, content: editContent},
+      {
+        onSuccess: () => {
+          setEditingCommentId(null);
+          setEditContent("");
         },
       },
     );
@@ -113,7 +132,6 @@ export function UpdateCommunityTab({vendorId}: {vendorId: string}) {
         )}
       </div>
 
-      {/* 🌟 댓글 작성란 (비로그인 상태 대응) */}
       <div className="mb-8 flex flex-col gap-2 relative">
         {replyTo && (
           <div className="flex items-center justify-between bg-slate-100 px-3 py-2 rounded-md text-sm">
@@ -127,13 +145,13 @@ export function UpdateCommunityTab({vendorId}: {vendorId: string}) {
         )}
 
         <div className="flex gap-2 relative">
-          {/* 비로그인 시 덮어씌울 오버레이 레이어 */}
           {!user && (
             <div
               className="absolute inset-0 z-10 bg-slate-50/40 backdrop-blur-[1px] rounded-md flex items-center justify-center cursor-pointer group"
               onClick={() => navigate("/login")}
             >
               <div className="flex items-center gap-2 px-4 py-2">
+                <Lock className="w-3.5 h-3.5 text-slate-500" />
                 <span className="text-xs font-bold text-slate-600">로그인 후 대화에 참여해보세요</span>
               </div>
             </div>
@@ -157,73 +175,159 @@ export function UpdateCommunityTab({vendorId}: {vendorId: string}) {
         </div>
       </div>
 
-      {/* 댓글 목록 */}
       <div className="space-y-6">
         <h4 className="font-bold text-slate-900 mb-4">댓글 {comments?.length || 0}개</h4>
 
-        {rootComments.map((comment) => (
-          <div key={comment.id} className="flex gap-4 group">
-            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
-              <User className="w-4 h-4 text-slate-400" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-baseline justify-between mb-1">
-                <div className="flex items-baseline gap-2">
-                  <span className="font-bold text-slate-900 text-sm">{comment.authorName}</span>
-                  <span className="text-xs text-slate-500">{formatDate(comment.createdAt)}</span>
-                </div>
-                {/* 작성자 본인 확인 로직이 필요하다면 user?.name === comment.authorName 등으로 필터 가능 */}
-                {!comment.deleted && user && (
-                  <button
-                    onClick={() => deleteComment(comment.id)}
-                    className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition-opacity"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
+        {rootComments.map((comment) => {
+          const isMyComment = user?.name === comment.authorName; // 🌟 작성자 본인 확인
+
+          return (
+            <div key={comment.id} className="flex gap-4 group">
+              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
+                <User className="w-4 h-4 text-slate-400" />
               </div>
-              <p className={`text-sm mb-2 ${comment.deleted ? "text-slate-400 italic" : "text-slate-700"}`}>
-                {comment.deleted ? "삭제된 댓글입니다." : comment.content}
-              </p>
+              <div className="flex-1">
+                <div className="flex items-baseline justify-between mb-1">
+                  <div className="flex items-baseline gap-2">
+                    <span className="font-bold text-slate-900 text-sm">{comment.authorName}</span>
+                    <span className="text-xs text-slate-500">{formatDate(comment.createdAt)}</span>
+                  </div>
 
-              {!comment.deleted && user && (
-                <button
-                  onClick={() => setReplyTo({id: comment.id, author: comment.authorName})}
-                  className="text-xs text-slate-500 hover:text-slate-900 font-medium mb-4"
-                >
-                  답글 달기
-                </button>
-              )}
+                  {/* 🌟 휴지통 대신 수정/삭제 텍스트 버튼 (내 댓글일 때만) */}
+                  {!comment.deleted && isMyComment && (
+                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => {
+                          setEditingCommentId(comment.id);
+                          setEditContent(comment.content);
+                        }}
+                        className="text-[11px] font-semibold text-slate-400 hover:text-blue-600 transition-colors"
+                      >
+                        수정
+                      </button>
+                      <button
+                        onClick={() => deleteComment(comment.id)}
+                        className="text-[11px] font-semibold text-slate-400 hover:text-red-500 transition-colors"
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  )}
+                </div>
 
-              {comments
-                ?.filter((reply) => reply.parentId === comment.id)
-                .map((reply) => (
-                  <div key={reply.id} className="flex gap-3 mt-3 p-3 bg-slate-50 rounded-lg group/reply">
-                    <CornerDownRight className="w-4 h-4 text-slate-300 flex-shrink-0 mt-1" />
-                    <div className="flex-1">
-                      <div className="flex items-baseline justify-between mb-1">
-                        <div className="flex items-baseline gap-2">
-                          <span className="font-bold text-slate-900 text-xs">{reply.authorName}</span>
-                          <span className="text-[10px] text-slate-500">{formatDate(reply.createdAt)}</span>
-                        </div>
-                        {!reply.deleted && user && (
-                          <button
-                            onClick={() => deleteComment(reply.id)}
-                            className="opacity-0 group-hover/reply:opacity-100 text-red-400 hover:text-red-600 transition-opacity"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        )}
-                      </div>
-                      <p className={`text-xs ${reply.deleted ? "text-slate-400 italic" : "text-slate-700"}`}>
-                        {reply.deleted ? "삭제된 댓글입니다." : reply.content}
-                      </p>
+                {/* 🌟 수정 모드일 때와 아닐 때 렌더링 분기 */}
+                {editingCommentId === comment.id ? (
+                  <div className="my-2 flex flex-col gap-2">
+                    <Input
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      className="bg-white h-9 text-sm"
+                      autoFocus
+                    />
+                    <div className="flex gap-2 justify-end">
+                      <Button size="sm" variant="ghost" onClick={() => setEditingCommentId(null)}>
+                        취소
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => handleEditSubmit(comment.id)}
+                        className="bg-slate-800 text-white hover:bg-slate-700"
+                      >
+                        저장
+                      </Button>
                     </div>
                   </div>
-                ))}
+                ) : (
+                  <p className={`text-sm mb-2 ${comment.deleted ? "text-slate-400 italic" : "text-slate-700"}`}>
+                    {comment.deleted ? "삭제된 댓글입니다." : comment.content}
+                  </p>
+                )}
+
+                {!comment.deleted && user && (
+                  <button
+                    onClick={() => setReplyTo({id: comment.id, author: comment.authorName})}
+                    className="text-xs text-slate-500 hover:text-slate-900 font-medium mb-4"
+                  >
+                    답글 달기
+                  </button>
+                )}
+
+                {/* 대댓글 영역 (마찬가지로 수정/삭제 로직 적용) */}
+                {comments
+                  ?.filter((reply) => reply.parentId === comment.id)
+                  .map((reply) => {
+                    const isMyReply = user?.name === reply.authorName;
+
+                    return (
+                      <div key={reply.id} className="flex gap-3 mt-3 p-3 bg-slate-50 rounded-lg group/reply">
+                        <CornerDownRight className="w-4 h-4 text-slate-300 flex-shrink-0 mt-1" />
+                        <div className="flex-1">
+                          <div className="flex items-baseline justify-between mb-1">
+                            <div className="flex items-baseline gap-2">
+                              <span className="font-bold text-slate-900 text-xs">{reply.authorName}</span>
+                              <span className="text-[10px] text-slate-500">{formatDate(reply.createdAt)}</span>
+                            </div>
+
+                            {!reply.deleted && isMyReply && (
+                              <div className="flex gap-2 opacity-0 group-hover/reply:opacity-100 transition-opacity">
+                                <button
+                                  onClick={() => {
+                                    setEditingCommentId(reply.id);
+                                    setEditContent(reply.content);
+                                  }}
+                                  className="text-[11px] font-semibold text-slate-400 hover:text-blue-600 transition-colors"
+                                >
+                                  수정
+                                </button>
+                                <button
+                                  onClick={() => deleteComment(reply.id)}
+                                  className="text-[11px] font-semibold text-slate-400 hover:text-red-500 transition-colors"
+                                >
+                                  삭제
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          {editingCommentId === reply.id ? (
+                            <div className="my-2 flex flex-col gap-2">
+                              <Input
+                                value={editContent}
+                                onChange={(e) => setEditContent(e.target.value)}
+                                className="bg-white h-8 text-sm"
+                                autoFocus
+                              />
+                              <div className="flex gap-2 justify-end">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => setEditingCommentId(null)}
+                                  className="h-8"
+                                >
+                                  취소
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleEditSubmit(reply.id)}
+                                  className="h-8 bg-slate-800 text-white hover:bg-slate-700"
+                                >
+                                  저장
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className={`text-xs ${reply.deleted ? "text-slate-400 italic" : "text-slate-700"}`}>
+                              {reply.deleted ? "삭제된 댓글입니다." : reply.content}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {comments?.length === 0 && (
           <div className="py-10 flex flex-col items-center text-slate-400">
