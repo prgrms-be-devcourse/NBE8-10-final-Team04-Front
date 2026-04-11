@@ -1,7 +1,7 @@
 // src/pages/payment/SubscribePage.tsx
 import {useNavigate} from "react-router-dom";
 import {useState} from "react";
-import {Sparkles, CheckCircle2, AlertCircle} from "lucide-react";
+import {Sparkles, CheckCircle2} from "lucide-react";
 import {PageLayout, PageInner} from "@/components/layout/PageLayout";
 import {Button} from "@/components/ui/button";
 import {Card} from "@/components/ui/card";
