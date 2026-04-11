@@ -1,6 +1,6 @@
 import {useState} from "react";
 import {useNavigate} from "react-router-dom"; // 🌟 네비게이트 추가
-import {MessageCircle, ChevronLeft, CornerDownRight, User, Trash2, ExternalLink, Lock} from "lucide-react";
+import {MessageCircle, ChevronLeft, CornerDownRight, User, Trash2, ExternalLink} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {useCommunity} from "@/features/community/hooks/useCommunity";
